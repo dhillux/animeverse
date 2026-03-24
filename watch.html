@@ -3,921 +3,509 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Nonton Anime — AnimeVerse</title>
+  <title>Nonton — AnimeVerse</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700&family=Oswald:wght@400;600;700&display=swap" rel="stylesheet"/>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
   <link href="css/style.css" rel="stylesheet"/>
   <style>
-    body { background: #05050e; }
-
-    /* ── LAYOUT ── */
-    .watch-layout {
-      display: grid;
-      grid-template-columns: 1fr 320px;
-      min-height: calc(100vh - 56px);
-    }
-    @media(max-width:1100px) { .watch-layout { grid-template-columns: 1fr; } }
-
-    /* ── VIDEO AREA ── */
-    .video-container { background: #000; display: flex; flex-direction: column; }
-    .video-player-wrap {
-      width: 100%; aspect-ratio: 16/9;
-      background: #000; position: relative;
-      display: flex; align-items: center; justify-content: center;
-    }
-    #mainPlayer { width: 100%; height: 100%; background: #000; display: none; }
-    .player-placeholder {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; gap: 1rem; color: rgba(255,255,255,.4);
-      background: linear-gradient(135deg, #0a0518, #0f0f1a);
-      width: 100%; height: 100%; position: absolute; inset: 0; z-index: 1;
-    }
-    .player-placeholder i { font-size: 5rem; color: rgba(114,80,220,.4); }
-    .player-placeholder p { font-family: 'Oswald', sans-serif; letter-spacing: 1px; font-size: .9rem; text-align: center; max-width: 320px; }
-    .player-loader {
-      position: absolute; inset: 0;
-      background: rgba(0,0,0,.75);
-      display: none; align-items: center; justify-content: center;
-      flex-direction: column; gap: 1rem;
-    }
-    .player-loader.show { display: flex; }
-
-    /* ── SERVER TABS ── */
-    .server-row {
-      padding: .6rem 1.25rem; background: #060610;
-      border-top: 1px solid rgba(255,255,255,.04);
-      display: flex; align-items: center; gap: .75rem; flex-wrap: wrap;
-    }
-    .server-label { font-family:'Oswald',sans-serif; font-size:.7rem; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.35); white-space:nowrap; }
-    .server-btn {
-      font-family:'Oswald',sans-serif; font-size:.7rem; letter-spacing:1px; text-transform:uppercase;
-      padding:.28rem .8rem; border-radius:6px;
-      border:1px solid rgba(255,255,255,.1); color:rgba(255,255,255,.5);
-      background:transparent; cursor:pointer; transition:all .2s;
-    }
-    .server-btn:hover, .server-btn.active { background:#7250dc; border-color:#7250dc; color:#fff; }
-    .server-btn.active-sub { background:rgba(114,80,220,.25); border-color:rgba(114,80,220,.5); color:#b09ef5; }
-
-    /* ── SUBTITLE NOTICE ── */
-    .sub-notice {
-      display: inline-flex; align-items: center; gap: .4rem;
-      font-family:'Oswald',sans-serif; font-size:.72rem; letter-spacing:1px;
-      background:rgba(114,80,220,.15); border:1px solid rgba(114,80,220,.3);
-      color:#b09ef5; padding:.25rem .7rem; border-radius:20px;
-    }
-    .sub-notice.active { background:rgba(46,160,67,.15); border-color:rgba(46,160,67,.3); color:#3fb950; }
-
-    /* ── ANIME INFO BAR ── */
-    .video-info { padding: 1rem 1.25rem; background: #08080e; border-top: 1px solid rgba(255,255,255,.05); }
-    .video-title { font-family:'Bebas Neue',sans-serif; font-size:1.4rem; letter-spacing:2px; }
-    .video-meta { font-family:'Oswald',sans-serif; font-size:.75rem; letter-spacing:.5px; color:rgba(255,255,255,.45); }
-    .info-action-btn {
-      font-family:'Oswald',sans-serif; font-size:.72rem; letter-spacing:1px; text-transform:uppercase;
-      padding:.32rem .9rem; border-radius:6px; border:1px solid rgba(255,255,255,.12);
-      background:transparent; color:rgba(255,255,255,.5); cursor:pointer; transition:all .2s;
-      text-decoration:none; display:inline-flex; align-items:center; gap:.4rem;
-    }
-    .info-action-btn:hover { border-color:#7250dc; color:#b09ef5; }
-    .anime-cover-side { width:70px; min-width:70px; border-radius:6px; overflow:hidden; flex-shrink:0; }
-    .anime-cover-side img { width:100%; display:block; object-fit:cover; min-height:95px; }
-
-    /* ── EPISODE SIDEBAR ── */
-    .ep-sidebar {
-      background: #09090f; border-left: 1px solid rgba(255,255,255,.05);
-      display: flex; flex-direction: column; max-height: calc(100vh - 56px);
-      position: sticky; top: 56px;
-    }
-    @media(max-width:1100px) { .ep-sidebar { max-height: 380px; position: static; } }
-    .ep-sidebar-header {
-      padding: .85rem 1.1rem; border-bottom: 1px solid rgba(255,255,255,.05);
-      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
-    }
-    .ep-sidebar-title { font-family:'Oswald',sans-serif; font-size:.78rem; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,.5); }
-    .ep-search {
-      background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.08);
-      border-radius:6px; padding:.3rem .7rem; color:#fff; font-size:.8rem;
-      width:100%; outline:none; transition:border-color .2s; margin:.5rem 1.1rem; width:calc(100% - 2.2rem);
-    }
-    .ep-search:focus { border-color:rgba(114,80,220,.5); }
-    .ep-search::placeholder { color:rgba(255,255,255,.25); }
-    .ep-list {
-      flex: 1; overflow-y: auto; padding: .4rem .6rem .6rem;
-      scrollbar-width: thin; scrollbar-color: rgba(114,80,220,.3) transparent;
-    }
-    .ep-item {
-      display: flex; align-items: center; gap: .65rem;
-      padding: .55rem .65rem; border-radius: 8px; cursor: pointer;
-      transition: background .2s; border: 1px solid transparent; margin-bottom: .25rem;
-    }
-    .ep-item:hover { background: rgba(114,80,220,.1); border-color: rgba(114,80,220,.2); }
-    .ep-item.active { background: rgba(114,80,220,.2); border-color: rgba(114,80,220,.4); }
-    .ep-num {
-      min-width: 34px; height: 34px; border-radius: 6px;
-      background: rgba(255,255,255,.06); display: flex; align-items: center;
-      justify-content: center; font-family:'Oswald',sans-serif; font-size:.78rem;
-      font-weight:600; flex-shrink:0;
-    }
-    .ep-item.active .ep-num { background: #7250dc; }
-    .ep-title { font-family:'Oswald',sans-serif; font-size:.8rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1; }
-    .ep-sub-badge { font-size:.58rem; padding:.08rem .35rem; border-radius:3px; background:rgba(114,80,220,.25); color:#b09ef5; border:1px solid rgba(114,80,220,.3); white-space:nowrap; flex-shrink:0; }
-    .ep-play-icon { margin-left:auto; color:rgba(114,80,220,.5); font-size:.78rem; flex-shrink:0; }
-
-    /* ── LOADER ── */
-    .av-loader { width:36px; height:36px; border:3px solid rgba(114,80,220,.2); border-top-color:#7250dc; border-radius:50%; animation:spin .8s linear infinite; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-
-    /* ── STATUS NOTES ── */
-    .status-note {
-      padding:.7rem 1rem; border-radius:8px;
-      font-family:'Oswald',sans-serif; font-size:.8rem; letter-spacing:.5px; line-height:1.6;
-    }
-    .status-note.info { background:rgba(114,80,220,.1); border:1px solid rgba(114,80,220,.25); color:#b09ef5; }
-    .status-note.warn { background:rgba(255,209,102,.08); border:1px solid rgba(255,209,102,.2); color:#ffd166; }
-    .status-note.err  { background:rgba(230,57,70,.08); border:1px solid rgba(230,57,70,.2); color:#f87171; }
-
-    /* ── THUMBNAIL ── */
-    .ep-thumb { width:56px; min-width:56px; height:36px; border-radius:4px; overflow:hidden; flex-shrink:0; }
-    .ep-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
-    .ep-thumb-placeholder { width:56px; height:36px; background:linear-gradient(135deg,#1a0a2e,#7250dc); border-radius:4px; display:flex; align-items:center; justify-content:center; font-size:.8rem; flex-shrink:0; }
+    body{background:#05050e;overflow-x:hidden}
+    .watch-layout{display:grid;grid-template-columns:1fr 340px;min-height:calc(100vh - 56px)}
+    @media(max-width:1100px){.watch-layout{grid-template-columns:1fr}.ep-sidebar{max-height:420px}}
+    .video-container{background:#000;display:flex;flex-direction:column}
+    .video-player-wrap{width:100%;aspect-ratio:16/9;background:#000;position:relative;display:flex;align-items:center;justify-content:center}
+    #mainPlayer{width:100%;height:100%;background:#000;display:none}
+    .player-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;height:100%;gap:1rem;color:rgba(255,255,255,.4);background:linear-gradient(135deg,#0a0518,#0f0f1a);position:absolute;inset:0}
+    .player-placeholder i{font-size:5rem;color:rgba(114,80,220,.35)}
+    .player-placeholder p{font-family:'Oswald',sans-serif;letter-spacing:1px;font-size:.9rem;text-align:center;padding:0 1rem}
+    #playerLoader{position:absolute;inset:0;background:rgba(0,0,0,.75);display:none;align-items:center;justify-content:center;flex-direction:column;gap:1rem;z-index:10}
+    #playerLoader p{font-family:'Oswald',sans-serif;font-size:.85rem;letter-spacing:1px;color:rgba(255,255,255,.6)}
+    .video-controls-bar{padding:.65rem 1.25rem;background:#060610;border-top:1px solid rgba(255,255,255,.04);display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+    .ctrl-label{font-family:'Oswald',sans-serif;font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.35);flex-shrink:0}
+    .server-btn{font-family:'Oswald',sans-serif;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;padding:.28rem .8rem;border-radius:5px;border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);background:transparent;cursor:pointer;transition:all .2s}
+    .server-btn:hover,.server-btn.active{background:#7250dc;border-color:#7250dc;color:#fff}
+    .subtitle-bar{padding:.5rem 1.25rem;background:rgba(114,80,220,.06);border-top:1px solid rgba(114,80,220,.15);display:none;align-items:center;gap:.75rem;flex-wrap:wrap}
+    .sub-btn{font-family:'Oswald',sans-serif;font-size:.7rem;letter-spacing:1px;text-transform:uppercase;padding:.25rem .75rem;border-radius:4px;border:1px solid rgba(114,80,220,.3);color:#b09ef5;background:transparent;cursor:pointer;transition:all .2s}
+    .sub-btn:hover,.sub-btn.active{background:rgba(114,80,220,.2);border-color:#7250dc;color:#fff}
+    .sub-btn.off{border-color:rgba(255,255,255,.1);color:rgba(255,255,255,.4)}
+    .video-info{padding:1.25rem 1.5rem;background:#08080e;border-top:1px solid rgba(255,255,255,.04)}
+    .video-title{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:2px;line-height:1.1}
+    .video-meta{font-family:'Oswald',sans-serif;font-size:.75rem;letter-spacing:1px;color:rgba(255,255,255,.45);margin-top:.35rem}
+    .ep-sidebar{background:#09090f;border-left:1px solid rgba(255,255,255,.05);display:flex;flex-direction:column;overflow:hidden}
+    .ep-sidebar-header{padding:.9rem 1.1rem;border-bottom:1px solid rgba(255,255,255,.05);font-family:'Oswald',sans-serif;font-size:.78rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+    .ep-search{padding:.6rem .9rem;border-bottom:1px solid rgba(255,255,255,.04);flex-shrink:0}
+    .ep-search input{width:100%;background:rgba(255,255,255,.05)!important;border:1px solid rgba(255,255,255,.08)!important;color:#fff!important;border-radius:6px;padding:.4rem .8rem;font-size:.82rem}
+    .ep-search input:focus{border-color:#7250dc!important;box-shadow:none!important;outline:none}
+    .ep-list{flex:1;overflow-y:auto;padding:.4rem;scrollbar-width:thin;scrollbar-color:rgba(114,80,220,.3) transparent}
+    .ep-item{display:flex;align-items:center;gap:.65rem;padding:.55rem .7rem;border-radius:7px;cursor:pointer;transition:background .15s;border:1px solid transparent;margin-bottom:.25rem}
+    .ep-item:hover{background:rgba(114,80,220,.1);border-color:rgba(114,80,220,.2)}
+    .ep-item.active{background:rgba(114,80,220,.2);border-color:rgba(114,80,220,.45)}
+    .ep-num{min-width:34px;height:34px;border-radius:6px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font-family:'Oswald',sans-serif;font-size:.8rem;font-weight:600;flex-shrink:0}
+    .ep-item.active .ep-num{background:#7250dc;color:#fff}
+    .ep-thumb{width:60px;height:38px;border-radius:4px;overflow:hidden;flex-shrink:0;background:rgba(114,80,220,.15)}
+    .ep-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .ep-title-col{flex:1;min-width:0}
+    .ep-title{font-family:'Oswald',sans-serif;font-size:.8rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .ep-sub-badge{font-size:.58rem;background:rgba(114,80,220,.2);color:#b09ef5;border-radius:3px;padding:.1rem .3rem;font-family:'Oswald',sans-serif}
+    .ep-play-icon{margin-left:auto;color:rgba(114,80,220,.5);font-size:.8rem;flex-shrink:0}
+    .av-loader{width:34px;height:34px;border:3px solid rgba(114,80,220,.2);border-top-color:#7250dc;border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .status-note{padding:.75rem 1rem;border-radius:8px;font-family:'Oswald',sans-serif;font-size:.8rem;letter-spacing:.5px}
+    .status-note.err{background:rgba(230,57,70,.08);border:1px solid rgba(230,57,70,.2);color:#f87171}
+    .status-note.warn{background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.2);color:#ffd166}
+    .ep-nav-btns{display:flex;gap:.5rem;padding:.6rem .9rem;border-top:1px solid rgba(255,255,255,.04);flex-shrink:0}
+    .ep-nav-btn{flex:1;padding:.5rem;font-family:'Oswald',sans-serif;font-size:.72rem;letter-spacing:1px;text-transform:uppercase;border-radius:6px;border:1px solid rgba(255,255,255,.08);color:rgba(255,255,255,.5);background:transparent;cursor:pointer;transition:all .2s}
+    .ep-nav-btn:hover:not(:disabled){background:rgba(114,80,220,.15);border-color:#7250dc;color:#fff}
+    .ep-nav-btn:disabled{opacity:.3;cursor:not-allowed}
   </style>
 </head>
 <body>
-
-<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg fixed-top">
   <div class="container-fluid px-3">
     <a class="navbar-brand" href="index.html">Anime<span>Verse</span></a>
-    <div id="navTitle" class="text-secondary d-none d-md-block" style="font-family:'Oswald',sans-serif;font-size:.85rem;letter-spacing:1px;flex:1;padding:0 1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
     <div class="d-flex align-items-center gap-2 ms-auto">
-      <a href="index.html" class="btn btn-mv-outline btn-sm"><i class="bi bi-house me-1"></i>Beranda</a>
+      <a href="anime.html" class="btn btn-mv-outline btn-sm d-none d-sm-inline-flex"><i class="bi bi-collection-play me-1"></i>Katalog</a>
       <a href="watchlist.html" class="btn btn-mv-outline btn-sm"><i class="bi bi-bookmark-heart me-1"></i>Watchlist</a>
     </div>
   </div>
 </nav>
-
 <div style="margin-top:56px">
-  <div class="watch-layout" id="watchLayout">
-
-    <!-- ══ LEFT: VIDEO + INFO ══ -->
+  <div class="watch-layout">
     <div class="video-container">
-
-      <!-- PLAYER -->
       <div class="video-player-wrap">
         <div class="player-placeholder" id="playerPlaceholder">
           <i class="bi bi-play-circle"></i>
           <p>Pilih episode untuk mulai menonton</p>
         </div>
-        <div class="player-loader" id="playerLoader">
-          <div class="av-loader"></div>
-          <p style="font-family:'Oswald',sans-serif;letter-spacing:1px;font-size:.85rem;color:rgba(255,255,255,.5)">Memuat stream...</p>
-        </div>
-        <!-- IFRAME EMBED PLAYER (primary) -->
-        <iframe id="embedPlayer"
-          style="display:none;width:100%;height:100%;border:none;background:#000"
-          allowfullscreen
-          allowfullscreen
-        allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-          sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation">
-        </iframe>
-        <!-- HTML5 VIDEO (fallback / SPlay HLS) -->
-        <video id="mainPlayer" controls crossorigin="anonymous" style="display:none;width:100%;height:100%">
-          Browser tidak mendukung HTML5 video.
-        </video>
+        <video id="mainPlayer" controls playsinline crossorigin="anonymous"></video>
+        <div id="playerLoader"><div class="av-loader"></div><p id="loaderMsg">Memuat stream...</p></div>
       </div>
-
-      <!-- SERVER TABS -->
-      <div class="server-row">
-        <span class="server-label">Server:</span>
+      <div class="video-controls-bar">
+        <span class="ctrl-label">Kualitas:</span>
         <div id="serverTabs" class="d-flex gap-1 flex-wrap"></div>
-        <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
-          <span id="subStatus" class="sub-notice">
-            <i class="bi bi-badge-cc"></i> Sub ID
-          </span>
-        </div>
+        <div id="urlExpiry" style="margin-left:auto;font-family:'Oswald',sans-serif;font-size:.68rem;color:rgba(255,255,255,.3)"></div>
       </div>
-
-      <!-- ANIME INFO -->
+      <div class="subtitle-bar" id="subtitleBar">
+        <span class="ctrl-label"><i class="bi bi-badge-cc me-1"></i>Subtitle:</span>
+        <div id="subtitleTabs" class="d-flex gap-1 flex-wrap"></div>
+      </div>
       <div class="video-info">
         <div id="animeInfoArea">
-          <div class="d-flex align-items-center gap-3 py-2">
-            <div class="av-loader" style="width:20px;height:20px;border-width:2px"></div>
+          <div class="d-flex align-items-center gap-3 py-3">
+            <div class="av-loader"></div>
             <span style="font-family:'Oswald',sans-serif;font-size:.85rem;color:rgba(255,255,255,.4)">Memuat info...</span>
           </div>
         </div>
       </div>
-
     </div>
-
-    <!-- ══ RIGHT: EPISODE SIDEBAR ══ -->
     <div class="ep-sidebar">
       <div class="ep-sidebar-header">
-        <span class="ep-sidebar-title"><i class="bi bi-collection-play me-2"></i>Episode</span>
-        <span id="epCount" style="font-size:.72rem;color:rgba(255,255,255,.3)">—</span>
+        <span><i class="bi bi-collection-play me-2"></i>Episode</span>
+        <span id="epCount" style="font-size:.7rem;color:rgba(255,255,255,.35)">&#8212;</span>
       </div>
-      <input type="text" class="ep-search" id="epSearch" placeholder="Cari episode..." oninput="filterEpisodes()">
+      <div class="ep-search"><input type="text" id="epSearchInput" placeholder="Cari episode..." oninput="filterEpisodes(this.value)"></div>
       <div class="ep-list" id="epList">
         <div class="d-flex justify-content-center align-items-center flex-column gap-3 py-5">
           <div class="av-loader"></div>
-          <span style="font-family:'Oswald',sans-serif;font-size:.8rem;color:rgba(255,255,255,.3)">Memuat episode...</span>
+          <span style="font-family:'Oswald',sans-serif;font-size:.8rem;color:rgba(255,255,255,.35)">Memuat episode...</span>
         </div>
       </div>
+      <div class="ep-nav-btns">
+        <button class="ep-nav-btn" id="prevEpBtn" disabled onclick="navigateEp(-1)"><i class="bi bi-chevron-left me-1"></i>Sebelumnya</button>
+        <button class="ep-nav-btn" id="nextEpBtn" disabled onclick="navigateEp(1)">Berikutnya<i class="bi bi-chevron-right ms-1"></i></button>
+      </div>
     </div>
-
   </div>
 </div>
 
-<!-- HLS.js -->
-<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.7/dist/hls.min.js"></script>
 <script>
-/* ════════════════════════════════════════════════════
-   AnimeVerse Watch Page
-   Streaming: SPlay API (hub.splay.id) — pakai API key kamu
-   Data:      Jikan API (MyAnimeList) — fallback info anime
-════════════════════════════════════════════════════ */
+/* ======================================================
+   AnimeVerse Watch Player — SPlay API
+   URL params:
+     ?id=attack-on-titan   ← SPlay slug (string)
+     &title=Attack+on+Titan
+     &ep=1                 (optional, default 1)
+   SPlay endpoints:
+     GET /api/anime/:id              → info
+     GET /api/anime/:id/episodes     → list
+     GET /api/anime/:id/episodes/:ep → stream URLs + subs
+====================================================== */
+
 const SPLAY_BASE = 'https://api.splay.id';
 const SPLAY_KEY  = 'sk_live_2355bb1f4e3cca896b15f6a740e377af95bcc4ad114833f7';
-const JIKAN_BASE = 'https://api.jikan.moe/v4';
 
-const splayFetch = (path) => fetch(`${SPLAY_BASE}${path}`, {
-  headers: { 'Authorization': `Bearer ${SPLAY_KEY}` }
-});
-
-// Cache slug SPlay supaya tidak fetch ulang
-const slugCache = {};
-
-/* ── CARI SLUG SPLAY dari judul anime ── */
-async function getSplaySlug(title, malId) {
-  const cacheKey = malId || title;
-  if (slugCache[cacheKey]) return slugCache[cacheKey];
-
-  try {
-    // Per SPlay docs: GET /api/anime/search?q=naruto&per_page=5
-    const cleanTitle = title.replace(/Season \d+|Part \d+/gi, '').trim();
-    const res = await splayFetch(`/api/anime/search?q=${encodeURIComponent(cleanTitle)}&per_page=5`);
-    if (!res.ok) throw new Error(`Search HTTP ${res.status}`);
-    const data = await res.json();
-    // Response: { data: [...], meta: {...} }
-    const list = Array.isArray(data) ? data : (data.data || []);
-    if (!list.length) throw new Error('Tidak ada hasil di SPlay');
-
-    // SPlay ID is a string slug: "one-piece", "frieren-beyond-journeys-end"
-    const best = list[0];
-    const slug = best.id || best.slug;
-    if (!slug) throw new Error('Slug tidak ditemukan');
-    slugCache[cacheKey] = slug;
-    console.log(`✅ SPlay slug: "${slug}" (search: "${cleanTitle}")`);
-    return slug;
-  } catch(e) {
-    // 403 = domain belum di-whitelist di hub.splay.id/dashboard
-    return null;
-  }
+async function splayFetch(path, params={}) {
+  const url = new URL(SPLAY_BASE + path);
+  Object.entries(params).forEach(([k,v]) => { if(v!==''&&v!=null) url.searchParams.set(k,v); });
+  const res = await fetch(url.toString(), { headers: { 'Authorization': 'Bearer '+SPLAY_KEY } });
+  if (!res.ok) throw new Error('SPlay HTTP '+res.status+' — '+path);
+  return res.json();
 }
 
-// Jikan: fallback untuk info anime (pakai MAL ID jika numerik)
-async function jikanAnimeInfo() {
-  if (!/^\d+$/.test(ANIME_ID)) return null;
-  const res = await fetch(`${JIKAN_BASE}/anime/${ANIME_ID}/full`);
-  if (!res.ok) throw new Error(`Jikan ${res.status}`);
-  const jd = (await res.json()).data;
-  return {
-    id: ANIME_ID, name: jd.title_english || jd.title,
-    cover_url: jd.images?.jpg?.large_image_url || '',
-    available_episodes: jd.episodes || 0,
-    anilist_data: {
-      averageScore: jd.score ? Math.round(jd.score * 10) : null,
-      status: jd.status === 'Currently Airing' ? 'RELEASING' : 'FINISHED',
-      countryOfOrigin: 'JP',
-      genres: (jd.genres || []).map(g => g.name),
-      description: jd.synopsis,
-      seasonYear: jd.year, season: jd.season, format: jd.type,
-      studios: (jd.studios || []).map(s => s.name)
-    }
-  };
-}
-
-const params  = new URLSearchParams(location.search);
-const ANIME_ID = params.get('id') || '';
-const TITLE    = decodeURIComponent(params.get('title') || 'Anime');
+const _p         = new URLSearchParams(location.search);
+const ANIME_ID   = _p.get('id')    || '';  // SPlay slug e.g. "attack-on-titan"
+const ANIME_TITLE= decodeURIComponent(_p.get('title') || 'Anime');
 
 let allEpisodes  = [];
-let filteredEps  = [];
 let currentEpNum = null;
-let currentSources = [];
+let currentSources = {};
 let currentSubs  = [];
-let hls = null;
+let hls          = null;
+let activeSubTrack = null;
+
+/* ── RESOLVE SLUG ── */
+// If ANIME_ID is a numeric MAL ID, resolve to SPlay slug via search
+let resolvedId = ANIME_ID;
+
+async function resolveSlug() {
+  if (!ANIME_ID) return null;
+  // If it's already a slug (non-numeric), use directly
+  if (!/^\d+$/.test(ANIME_ID)) return ANIME_ID;
+  // Numeric ID — search SPlay by title
+  try {
+    document.getElementById('loaderMsg').textContent = 'Mencari anime di SPlay...';
+    const clean = ANIME_TITLE.replace(/Season \d+|Part \d+/gi,'').trim();
+    const data  = await splayFetch('/api/anime/search', { q: clean, per_page: 5 });
+    const list  = data.data || [];
+    if (list.length) {
+      resolvedId = list[0].id;
+      console.log('Resolved MAL ID '+ANIME_ID+' → SPlay slug: '+resolvedId);
+      return resolvedId;
+    }
+  } catch(e) {
+    console.warn('Slug resolution failed:', e.message);
+  }
+  return ANIME_ID; // fallback to numeric, will likely fail
+}
 
 /* ── INIT ── */
-document.title = `${TITLE} — AnimeVerse`;
-document.getElementById('navTitle').textContent = TITLE;
-
 async function init() {
   if (!ANIME_ID) {
-    showEpError('Tidak ada ID anime. Kembali ke <a href="index.html">beranda</a>.');
-    document.getElementById('animeInfoArea').innerHTML = `<p class="text-secondary">ID anime tidak ditemukan.</p>`;
+    document.getElementById('animeInfoArea').innerHTML = '<div class="status-note err">ID anime tidak ditemukan di URL. <a href="anime.html" style="color:#b09ef5">Kembali ke Katalog</a></div>';
+    document.getElementById('epList').innerHTML = '';
     return;
   }
+  document.title = ANIME_TITLE + ' — AnimeVerse';
+  // Show loader during slug resolution
+  document.getElementById('playerPlaceholder').style.display = 'none';
+  document.getElementById('playerLoader').style.display = 'flex';
+  // Resolve slug first if needed
+  resolvedId = await resolveSlug();
+  document.getElementById('playerLoader').style.display = 'none';
+  document.getElementById('playerPlaceholder').style.display = 'flex';
   await Promise.all([loadAnimeInfo(), loadEpisodes()]);
 }
 
 /* ── ANIME INFO ── */
 async function loadAnimeInfo() {
   try {
-    let a;
+    const data = await splayFetch('/api/anime/' + resolvedId);
+    const raw  = data.data || data;
+    const al   = raw.anilist_data || {};
+    const title  = (al.title && al.title.english) || raw.name || ANIME_TITLE;
+    const cover  = raw.cover_url || '';
+    const score  = al.averageScore ? (al.averageScore/10).toFixed(1) : null;
+    const origin = al.countryOfOrigin || 'JP';
+    const flag   = {JP:'\uD83C\uDDEF\uD83C\uDDF5', CN:'\uD83C\uDDE8\uD83C\uDDF3', KR:'\uD83C\uDDF0\uD83C\uDDF7'}[origin] || '\uD83C\uDF0F';
+    const eps    = raw.available_episodes || al.episodes || 0;
+    const status = al.status || '';
+    const genres = (raw.genres||[]).slice(0,4);
 
-    // Coba SPlay dulu untuk data lengkap
-    try {
-      const slug = await getSplaySlug(TITLE, ANIME_ID);
-      if (slug) {
-        // Per docs: GET /api/anime/{id} → detail with AniList metadata
-        const res = await splayFetch(`/api/anime/${slug}`);
-        if (res.ok) {
-          const raw = await res.json();
-          a = raw.data || raw;
-          console.log('✅ Info dari SPlay:', slug);
-        }
-      }
-    } catch(eSplay) {
-      console.warn('SPlay info gagal, pakai Jikan:', eSplay.message);
-    }
+    document.title = title + ' — AnimeVerse';
 
-    // Fallback Jikan
-    if (!a) {
-      a = await jikanAnimeInfo();
-      if (!a) throw new Error('Tidak ada data anime');
-      console.log('📡 Info dari Jikan');
-    }
+    const genreHtml = genres.map(g =>
+      '<span style="background:rgba(114,80,220,.15);border:1px solid rgba(114,80,220,.3);color:#b09ef5;border-radius:4px;padding:.12rem .5rem;font-family:Oswald,sans-serif;font-size:.63rem">'+g+'</span>'
+    ).join('');
 
-    const title   = a.name || TITLE;
-    const score   = a.anilist_data?.averageScore;
-    const status  = a.anilist_data?.status || '';
-    const country = a.anilist_data?.countryOfOrigin || '';
-    const eps     = a.available_episodes || 0;
-    const hasSub  = a.has_subtitle_id || a.subtitle_languages?.includes('id');
-    const originMap = { JP: '🇯🇵', CN: '🇨🇳', KR: '🇰🇷' };
-    const flag = originMap[country] || '🌐';
+    const wlData = JSON.stringify({id:raw.id,title,cover,score:score?parseFloat(score):null,episodes:eps,genres:genres.join(', ')}).replace(/"/g,'&quot;');
 
-    document.title = `${title} — AnimeVerse`;
-    document.getElementById('navTitle').textContent = title;
-
-    document.getElementById('animeInfoArea').innerHTML = `
-      <div class="d-flex gap-3 align-items-start flex-wrap">
-        ${a.cover_url ? `<div class="anime-cover-side"><img src="${a.cover_url}" alt="${title}"></div>` : ''}
-        <div style="flex:1;min-width:180px">
-          <div class="video-title mb-1">${title}</div>
-          <div class="video-meta mb-2">${flag} ${country} · ${eps ? eps+' Ep' : 'Ongoing'} · ${status}${hasSub ? ' · <span style="color:#b09ef5">Sub ID</span>' : ''}</div>
-          ${score ? `<div style="font-family:'Oswald',sans-serif;font-size:.8rem;color:#ffd166;margin-bottom:.6rem">⭐ ${(score/10).toFixed(1)} / 10</div>` : ''}
-          <div class="d-flex gap-2 flex-wrap">
-            <a href="index.html?id=${ANIME_ID}" class="info-action-btn"><i class="bi bi-info-circle"></i>Detail</a>
-            <button onclick="saveWatchlist(${JSON.stringify(a).replace(/"/g,'&quot;')})" class="info-action-btn"><i class="bi bi-bookmark-plus"></i>Watchlist</button>
-            <a href="history.html" class="info-action-btn"><i class="bi bi-clock-history"></i>Riwayat</a>
-          </div>
-        </div>
-      </div>`;
-
+    document.getElementById('animeInfoArea').innerHTML =
+      '<div class="d-flex gap-3 align-items-start flex-wrap">'
+      + (cover ? '<img src="'+cover+'" alt="'+title+'" style="width:72px;border-radius:8px;object-fit:cover;flex-shrink:0">' : '')
+      + '<div style="flex:1;min-width:180px">'
+      + '<div class="video-title">'+title+'</div>'
+      + '<div class="video-meta">'+flag+' '+origin+' &middot; '+(eps ? eps+' Ep' : 'Ongoing')+' &middot; '+status+'</div>'
+      + '<div class="d-flex flex-wrap gap-2 mt-2 mb-2">'+genreHtml+'</div>'
+      + '<div class="d-flex gap-2 flex-wrap mt-2">'
+      + '<a href="anime.html?id='+ANIME_ID+'" class="btn btn-mv-outline btn-sm"><i class="bi bi-info-circle me-1"></i>Detail</a>'
+      + '<button onclick="saveWL('+wlData+')" class="btn btn-mv-outline btn-sm"><i class="bi bi-bookmark-plus me-1"></i>Watchlist</button>'
+      + '</div></div>'
+      + (score ? '<div style="text-align:center;flex-shrink:0"><div style="font-family:Bebas Neue,sans-serif;font-size:2rem;line-height:1;color:'+(parseFloat(score)>=8?'#3fb950':parseFloat(score)>=7?'#ffd166':'#b09ef5')+'">'+score+'</div><div style="font-family:Oswald,sans-serif;font-size:.6rem;letter-spacing:2px;color:rgba(255,255,255,.35)">SKOR</div></div>' : '')
+      + '</div>';
   } catch(e) {
-    document.getElementById('animeInfoArea').innerHTML = `
-      <div class="video-title">${TITLE}</div>
-      <div class="video-meta text-danger">Gagal memuat info: ${e.message}</div>`;
+    document.getElementById('animeInfoArea').innerHTML = '<div class="video-title">'+ANIME_TITLE+'</div><div class="video-meta" style="color:#f87171">'+e.message+'</div>';
+    console.error('Info error:', e);
   }
-}
-
-/* ── JIKAN EPISODES ── */
-async function jikanEpisodes(malId) {
-  if (!/^\d+$/.test(malId)) {
-    // Non-numeric ID → create fake episode list based on anime detail
-    return generateEpisodeList(malId);
-  }
-
-  // Get total episode count from anime detail first
-  let totalEps = 0;
-  try {
-    const detailRes = await fetch(`${JIKAN_BASE}/anime/${malId}`);
-    if (detailRes.ok) {
-      const det = await detailRes.json();
-      totalEps = det.data?.episodes || 0;
-    }
-  } catch(e) {}
-
-  // Fetch episode list (paginated, max 100 per page)
-  let allEps = [];
-  let page = 1;
-  while (true) {
-    try {
-      const res = await fetch(`${JIKAN_BASE}/anime/${malId}/episodes?page=${page}`);
-      if (!res.ok) break;
-      const data = await res.json();
-      const eps = data.data || [];
-      if (!eps.length) break;
-
-      allEps = [...allEps, ...eps.map(ep => ({
-        episode_number: ep.mal_id,
-        number: ep.mal_id,
-        title: ep.title || ep.title_romanji || `Episode ${ep.mal_id}`,
-        thumbnail_url: ep.images?.jpg?.image_url || null,
-        has_subtitle_id: false,
-        subtitle_tracks: []
-      }))];
-
-      // Check if there are more pages
-      if (!data.pagination?.has_next_page || page >= 5) break;
-      page++;
-      await new Promise(r => setTimeout(r, 350)); // Jikan rate limit
-    } catch(e) { break; }
-  }
-
-  // If Jikan has no episode list (some anime lack it), generate from total count
-  if (!allEps.length && totalEps > 0) {
-    allEps = Array.from({ length: totalEps }, (_, i) => ({
-      episode_number: i + 1, number: i + 1,
-      title: `Episode ${i + 1}`, thumbnail_url: null,
-      has_subtitle_id: false, subtitle_tracks: []
-    }));
-  }
-
-  return allEps;
-}
-
-// Generate episode list when we only know the count (no Jikan episode data)
-async function generateEpisodeList(animeId) {
-  return Array.from({ length: 12 }, (_, i) => ({
-    episode_number: i + 1, number: i + 1,
-    title: `Episode ${i + 1}`, thumbnail_url: null,
-    has_subtitle_id: false, subtitle_tracks: []
-  }));
 }
 
 /* ── EPISODE LIST ── */
-async function loadEpisodes() {
+async function loadEpisodes(page=1) {
   try {
-    let allEps = [];
+    const data = await splayFetch('/api/anime/'+resolvedId+'/episodes', {page, per_page:100});
+    allEpisodes = [...allEpisodes, ...(data.data || [])];
 
-    // 1. Coba SPlay episode list dulu (punya thumbnail + subtitle info)
-    try {
-      const slug = await getSplaySlug(TITLE, ANIME_ID);
-      if (slug) {
-        const res = await splayFetch(`/api/anime/${slug}/episodes?page=1&per_page=100`);
-        if (res.ok) {
-          const data = await res.json();
-          const list = Array.isArray(data) ? data : (data.data || []);
-          if (list.length) {
-            allEps = list;
-            console.log(`✅ Episode dari SPlay: ${allEps.length} ep`);
-          }
-        } else if (res.status === 403) {
-          console.info('ℹ️ SPlay: domain belum di-whitelist. Whitelist di hub.splay.id/dashboard');
-        }
-      }
-    } catch(eSplay) {
-      // Silent fail — embed player tetap aktif
-    }
+    const totalPages = data.meta?.total_pages || 1;
+    if (page < totalPages && page < 5) { await loadEpisodes(page+1); return; }
 
-    // 2. Jika SPlay kosong → Jikan fallback
-    if (!allEps.length) {
-      try {
-        allEps = await jikanEpisodes(ANIME_ID);
-        console.log(`📡 Episode dari Jikan: ${allEps.length} ep`);
-      } catch(e) {
-        console.warn('Jikan episodes error:', e.message);
-      }
-    }
+    document.getElementById('epCount').textContent = allEpisodes.length + ' Episode';
+    renderEpList(allEpisodes);
 
-    allEpisodes = allEps;
-    filteredEps = allEps;
-
-    if (!allEps.length) {
-      showEpError('Episode belum tersedia untuk anime ini di SPlay maupun Jikan.');
-      return;
-    }
-
-    document.getElementById('epCount').textContent = `${allEps.length} Ep`;
-    renderEpisodeList(allEps);
-
-    // Auto-play first episode (embed player always works)
-    if (allEps.length > 0) {
-      const firstEp = allEps[0];
-      const firstNum = firstEp.episode_number || firstEp.number || 1;
-      playEpisode(firstNum);
-    }
-
+    // Auto-play
+    const startEp = parseInt(_p.get('ep') || '1');
+    const first   = allEpisodes.find(e => e.episode_number === startEp) || allEpisodes[0];
+    if (first) setTimeout(() => playEpisode(first.episode_number), 400);
   } catch(e) {
-    showEpError(`Gagal memuat episode: ${e.message}`);
+    document.getElementById('epList').innerHTML =
+      '<div class="p-3"><div class="status-note err">Gagal memuat episode: '+e.message+'</div>'
+      +'<button class="btn btn-mv-outline btn-sm mt-2" onclick="allEpisodes=[];loadEpisodes()"><i class="bi bi-arrow-clockwise me-1"></i>Coba Lagi</button></div>';
+    console.error('Episodes error:', e);
   }
 }
 
-/* ── RENDER EPISODE LIST ── */
-function renderEpisodeList(eps) {
-  const epList = document.getElementById('epList');
+function renderEpList(eps) {
+  const list = document.getElementById('epList');
   if (!eps.length) {
-    epList.innerHTML = `<div class="p-3"><div class="status-note warn">Tidak ada episode yang cocok.</div></div>`;
+    list.innerHTML = '<div class="status-note warn m-3">Belum ada episode tersedia.</div>';
     return;
   }
-
-  epList.innerHTML = eps.map(ep => {
-    const num   = ep.episode_number || ep.number || ep.id;
-    const title = ep.title || ep.name || `Episode ${num}`;
-    const hasSub = ep.has_subtitle_id || (ep.subtitle_tracks || []).some(s => s.language === 'id' || s.lang === 'id');
-    const thumb = ep.thumbnail_url || ep.thumbnail || '';
-    const epId  = `ep-${num}`;
-
-    return `
-      <div class="ep-item" id="${epId}" onclick="playEpisode(${num})">
-        ${thumb
-          ? `<div class="ep-thumb"><img src="${thumb}" alt="Ep ${num}" loading="lazy"></div>`
-          : `<div class="ep-thumb-placeholder">▶</div>`}
-        <div class="ep-num">${num}</div>
-        <div class="ep-title" title="${title}">${title}</div>
-        ${hasSub ? `<span class="ep-sub-badge">SUB ID</span>` : ''}
-        <i class="bi bi-play-circle-fill ep-play-icon"></i>
-      </div>`;
+  list.innerHTML = eps.map(ep => {
+    const hasID = (ep.subtitles||[]).some(s=>s.lang==='id');
+    const hasEN = (ep.subtitles||[]).some(s=>s.lang==='en');
+    const thumb = ep.thumbnail_url || '';
+    const safe  = JSON.stringify(ep).replace(/"/g,'&quot;');
+    return '<div class="ep-item" id="ep-item-'+ep.episode_number+'" onclick="playEpisode('+ep.episode_number+')">'
+      + '<div class="ep-thumb">'+(thumb?'<img src="'+thumb+'" loading="lazy">':'')+'</div>'
+      + '<div class="ep-num">'+ep.episode_number+'</div>'
+      + '<div class="ep-title-col">'
+      + '<div class="ep-title">'+(ep.title||'Episode '+ep.episode_number)+'</div>'
+      + '<div class="d-flex gap-1 mt-1">'
+      + ((ep.subtitles||[]).length ? '<span class="ep-sub-badge">SUB</span>' : '')
+      + (hasID ? '<span class="ep-sub-badge" style="background:rgba(46,160,67,.15);color:#3fb950">ID</span>' : '')
+      + (hasEN ? '<span class="ep-sub-badge" style="background:rgba(30,100,200,.15);color:#5588ff">EN</span>' : '')
+      + '</div></div>'
+      + '<i class="bi bi-play-circle-fill ep-play-icon"></i></div>';
   }).join('');
 }
 
-/* ── FILTER EPISODES ── */
-function filterEpisodes() {
-  const q = document.getElementById('epSearch').value.toLowerCase().trim();
-  filteredEps = q
-    ? allEpisodes.filter(ep => {
-        const t = (ep.title || ep.name || '').toLowerCase();
-        const n = String(ep.episode_number || ep.number || ep.id || '');
-        return t.includes(q) || n.includes(q);
-      })
+function filterEpisodes(q) {
+  const f = q.toLowerCase();
+  const filtered = f
+    ? allEpisodes.filter(e => String(e.episode_number).includes(f) || (e.title||'').toLowerCase().includes(f))
     : allEpisodes;
-  renderEpisodeList(filteredEps);
-  // Re-highlight active
-  if (currentEpNum !== null) {
-    const el = document.getElementById(`ep-${currentEpNum}`);
+  renderEpList(filtered);
+  if (currentEpNum) {
+    const el = document.getElementById('ep-item-'+currentEpNum);
     if (el) el.classList.add('active');
   }
 }
 
-/* ════════════════════════════════════════════
-   EMBED SERVERS — pakai MAL ID + episode num
-   Tidak butuh API key, langsung jalan.
-════════════════════════════════════════════ */
-// ═══════════════════════════════════════════════
-// Server embed — pakai MAL ID, tidak butuh API key
-// URL format diverifikasi dari docs resmi masing-masing
-// ═══════════════════════════════════════════════
-const EMBED_SERVERS = [
-  {
-    label: '🟣 Server 1',
-    // vidsrc.to — format: /embed/anime/{mal_id}/{ep_num}
-    getUrl: (malId, ep) => `https://vidsrc.to/embed/anime/${malId}/${ep}`,
-    hasSub: true
-  },
-  {
-    label: '🔵 Server 2',
-    // vidsrc.me — format: /embed/anime/{mal_id}/{ep_num}
-    getUrl: (malId, ep) => `https://vidsrc.me/embed/anime/${malId}/${ep}`,
-    hasSub: true
-  },
-  {
-    label: '🟢 Server 3',
-    // vidsrc.in — format: /embed/anime?malId={id}&ep={ep}
-    getUrl: (malId, ep) => `https://vidsrc.in/embed/anime?malId=${malId}&ep=${ep}`,
-    hasSub: true
-  },
-  {
-    label: '🟡 Server 4',
-    // anime.nexplay.it — format: /?malid={id}&ep={ep}
-    getUrl: (malId, ep) => `https://anime.nexplay.it/?malid=${malId}&ep=${ep}`,
-    hasSub: true
-  },
-  {
-    label: '🟠 Server 5',
-    // player.smashy.stream — format: /anime/{mal_id}?ep={ep}
-    getUrl: (malId, ep) => `https://player.smashy.stream/anime/${malId}?ep=${ep}`,
-    hasSub: false
-  }
-];
-
-let activeServerIdx = 0;
-
 /* ── PLAY EPISODE ── */
 async function playEpisode(epNum) {
-  // Highlight in sidebar
-  document.querySelectorAll('.ep-item').forEach(e => e.classList.remove('active'));
-  const el = document.getElementById(`ep-${epNum}`);
-  if (el) {
-    el.classList.add('active');
-    el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }
+  if (currentEpNum === epNum) return;
   currentEpNum = epNum;
-  activeServerIdx = 0;
 
-  showPlayerLoader(true);
-  setSubStatus('loading');
+  document.querySelectorAll('.ep-item').forEach(e => e.classList.remove('active'));
+  const epEl = document.getElementById('ep-item-'+epNum);
+  if (epEl) { epEl.classList.add('active'); epEl.scrollIntoView({behavior:'smooth',block:'nearest'}); }
 
-  // Render server tabs
-  renderEmbedServerTabs(epNum);
+  const idx = allEpisodes.findIndex(e => e.episode_number === epNum);
+  document.getElementById('prevEpBtn').disabled = idx <= 0;
+  document.getElementById('nextEpBtn').disabled = idx >= allEpisodes.length - 1;
+  history.replaceState(null,'','watch.html?id='+resolvedId+'&title='+encodeURIComponent(ANIME_TITLE)+'&ep='+epNum);
 
-  // Play with first embed server
-  loadEmbedPlayer(ANIME_ID, epNum, 0);
-
-  // Try SPlay in background (for HLS option) — fire and forget
-  trySPlayStream(epNum);
-
-  // Save history
-  saveHistory({ episode_number: epNum });
-}
-
-/* ── LOAD EMBED PLAYER ── */
-function loadEmbedPlayer(malId, epNum, serverIdx) {
-  const server = EMBED_SERVERS[serverIdx] || EMBED_SERVERS[0];
-  const embedUrl = server.getUrl(malId, epNum);
-
-  const embedPlayer = document.getElementById('embedPlayer');
-  const videoPlayer = document.getElementById('mainPlayer');
-  const placeholder = document.getElementById('playerPlaceholder');
-
-  // Hide video, show iframe
-  videoPlayer.style.display = 'none';
-  placeholder.style.display = 'none';
-  embedPlayer.style.display = 'block';
-  embedPlayer.src = embedUrl;
-
-  showPlayerLoader(false);
-  setSubStatus(server.hasSub ? 'active' : 'available');
-
-  // Highlight active tab
-  document.querySelectorAll('.server-btn').forEach((b, i) => {
-    b.classList.toggle('active', i === serverIdx);
-  });
-  activeServerIdx = serverIdx;
-}
-
-/* ── LOAD STREAM DARI SPLAY (utama) ── */
-async function trySPlayStream(epNum) {
-  // Dapatkan slug SPlay dari title anime
-  const slug = await getSplaySlug(TITLE, ANIME_ID);
-  if (!slug) {
-    console.warn('Tidak dapat slug SPlay, embed player tetap aktif');
-    return;
-  }
+  // Show loader
+  const ph = document.getElementById('playerPlaceholder');
+  const pl = document.getElementById('mainPlayer');
+  const ld = document.getElementById('playerLoader');
+  ph.style.display = 'none'; pl.style.display = 'none'; ld.style.display = 'flex';
+  document.getElementById('loaderMsg').textContent = 'Memuat stream episode '+epNum+'...';
+  document.getElementById('serverTabs').innerHTML = '';
+  document.getElementById('subtitleBar').style.display = 'none';
+  document.getElementById('urlExpiry').textContent = '';
 
   try {
-    // Per SPlay docs: GET /api/anime/{slug}/episodes/{number}
-    // Returns: signed HLS URL + subtitle tracks
-    const res = await splayFetch(`/api/anime/${slug}/episodes/${epNum}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    // Response shape from OpenAPI: episode with video_url, qualities, subtitle_url
-    const ep = data.data || data;
+    // GET /api/anime/:id/episodes/:ep
+    const data = await splayFetch('/api/anime/'+resolvedId+'/episodes/'+epNum);
+    const ep   = data.data || data;
+    const urls = ep.video_urls || {};
+    currentSources = urls;
+    currentSubs    = ep.subtitles || [];
 
-    // Handle both possible response shapes
-    let sources = [];
-    if (ep.qualities && typeof ep.qualities === 'object') {
-      // { qualities: { "1080p": "url", "720p": "url" } }
-      sources = Object.entries(ep.qualities).map(([q, url]) => ({
-        quality: q, url, type: url.includes('.m3u8') ? 'hls' : 'mp4'
-      }));
-    } else if (ep.video_url) {
-      sources = [{ quality: 'Auto', url: ep.video_url, type: ep.video_url.includes('.m3u8') ? 'hls' : 'mp4' }];
-    } else if (ep.sources) {
-      sources = ep.sources;
+    // Quality order: hls first (adaptive), then 1080p, 720p, etc.
+    const qualOrder = ['hls','1080p','720p','480p','360p'];
+    const avail     = qualOrder.filter(q => urls[q]);
+
+    if (!avail.length) throw new Error('Tidak ada sumber video dari SPlay');
+
+    // Build quality buttons
+    document.getElementById('serverTabs').innerHTML = avail.map((q,i) =>
+      '<button class="server-btn '+(i===0?'active':'')+'" onclick="switchQuality(''+q+'',this)">'
+      + (q==='hls' ? '<i class="bi bi-broadcast me-1"></i>HLS Auto' : q)
+      + '</button>'
+    ).join('');
+
+    // URL expiry
+    if (ep.url_expires_at) {
+      document.getElementById('urlExpiry').textContent =
+        'Link valid hingga: ' + new Date(ep.url_expires_at).toLocaleTimeString('id-ID');
     }
 
-    const subs = ep.subtitle_tracks || ep.subtitles ||
-      (ep.subtitle_url ? [{ url: ep.subtitle_url, language: 'id', label: 'Indonesia' }] : []);
+    // Subtitle buttons
+    if (currentSubs.length) {
+      document.getElementById('subtitleBar').style.display = 'flex';
+      document.getElementById('subtitleTabs').innerHTML =
+        '<button class="sub-btn off active" onclick="setSub(null,this)">OFF</button>'
+        + currentSubs.map(s => {
+            const lang = s.lang||s.language||'';
+            const lbl  = lang==='id' ? '\uD83C\uDDEE\uD83C\uDDE9 Indonesia'
+                        : lang==='en' ? '\uD83C\uDDEC\uD83C\uDDE7 English'
+                        : s.label||lang;
+            return '<button class="sub-btn" onclick="setSub('+JSON.stringify(s).replace(/"/g,'&quot;')+',this)">'+lbl+(s.is_default?' \u2713':'')+'</button>';
+          }).join('');
 
-    if (!sources.length) {
-      console.warn('SPlay tidak ada sumber video untuk ep', epNum);
-      return;
+      // Auto-activate Indonesian subtitle
+      const idSub = currentSubs.find(s => (s.lang||s.language||'')==='id');
+      if (idSub) {
+        setTimeout(() => {
+          const btn = document.querySelector('#subtitleTabs .sub-btn:not(.off)');
+          if (btn) setSub(idSub, btn);
+        }, 700);
+      }
     }
 
-    console.log(`✅ SPlay stream tersedia: ${sources.length} sumber`);
-    currentSources = sources;
-
-    // Tampilkan subtitle Indonesia jika ada
-    if (subs.length) {
-      handleSubtitles(subs);
-      const idSub = subs.find(s =>
-        (s.language||s.lang||'').toLowerCase() === 'id' ||
-        (s.label||'').toLowerCase().includes('indo')
-      );
-      setSubStatus(idSub ? 'active' : 'available');
-    }
-
-    // Tambahkan tombol SPlay HLS ke server tabs
-    const tabs = document.getElementById('serverTabs');
-    sources.slice(0, 3).forEach((src, i) => {
-      const label = src.quality || (src.type === 'hls' ? 'HLS' : 'MP4') || `SPlay ${i+1}`;
-      const btn = document.createElement('button');
-      btn.className = 'server-btn';
-      btn.style.cssText = 'border-color:#7250dc;color:#b09ef5;';
-      btn.innerHTML = `⚡ ${label}`;
-      btn.onclick = () => {
-        document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        // Switch dari iframe ke native video player
-        const embedPlayer = document.getElementById('embedPlayer');
-        embedPlayer.style.display = 'none';
-        embedPlayer.src = '';
-        showPlayerLoader(true);
-        playSource(src);
-      };
-      tabs.appendChild(btn);
-    });
-
-    // Jika sumber HLS ada → langsung switch ke native player (kualitas lebih baik)
-    const hlsSrc = sources.find(s => s.type === 'hls' || (s.url||'').includes('.m3u8'));
-    if (hlsSrc) {
-      console.log('✅ Auto-switch ke SPlay HLS player');
-      const embedPlayer = document.getElementById('embedPlayer');
-      embedPlayer.style.display = 'none';
-      embedPlayer.src = '';
-      showPlayerLoader(true);
-      // Tandai tombol pertama SPlay sebagai aktif
-      setTimeout(() => {
-        document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
-        const splayBtns = [...tabs.querySelectorAll('.server-btn')].filter(b => b.textContent.includes('⚡'));
-        if (splayBtns[0]) splayBtns[0].classList.add('active');
-      }, 100);
-      await playSource(hlsSrc);
-    }
+    // Start playing best quality
+    await playSource(urls[avail[0]], avail[0]);
+    saveHist(epNum);
 
   } catch(e) {
-    console.warn('SPlay stream gagal:', e.message, '— embed player tetap aktif');
+    ld.style.display = 'none';
+    ph.style.display = 'flex';
+    ph.innerHTML = '<i class="bi bi-exclamation-circle" style="color:rgba(230,57,70,.5)"></i>'
+      + '<p>Gagal memuat stream episode '+epNum+'</p>'
+      + '<p style="font-size:.78rem;opacity:.6">'+e.message+'</p>';
+    console.error('Play error ep'+epNum+':', e);
   }
 }
 
-/* ── RENDER EMBED SERVER TABS ── */
-function renderEmbedServerTabs(epNum) {
-  const tabs = document.getElementById('serverTabs');
-  tabs.innerHTML = EMBED_SERVERS.map((s, i) =>
-    `<button class="server-btn ${i===0?'active':''}" onclick="loadEmbedPlayer('${ANIME_ID}', ${epNum}, ${i})">${s.label}</button>`
-  ).join('');
-}
-
-async function switchSource(idx, btn) {
-  // Legacy for HLS sources
+/* ── SWITCH QUALITY ── */
+async function switchQuality(q, btn) {
   document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  if (currentSources[idx]) {
-    showPlayerLoader(true);
-    await playSource(currentSources[idx]);
+  if (currentSources[q]) {
+    const pl = document.getElementById('mainPlayer');
+    const ld = document.getElementById('playerLoader');
+    pl.style.display = 'none'; ld.style.display = 'flex';
+    await playSource(currentSources[q], q);
   }
 }
 
-/* ── HANDLE SUBTITLES ── */
-function handleSubtitles(subs) {
-  const player = document.getElementById('mainPlayer');
-  // Remove old tracks
-  while (player.firstChild) player.removeChild(player.firstChild);
-
-  if (!subs || !subs.length) {
-    setSubStatus('none');
-    return;
-  }
-
-  // Find Indonesian subtitle
-  const idSub = subs.find(s =>
-    (s.language || s.lang || '').toLowerCase() === 'id' ||
-    (s.label || '').toLowerCase().includes('indo') ||
-    (s.label || '').toLowerCase().includes('indonesia')
-  );
-
-  subs.forEach(sub => {
-    const track = document.createElement('track');
-    track.kind  = 'subtitles';
-    track.label = sub.label || sub.language || sub.lang || 'Subtitle';
-    track.srclang = sub.language || sub.lang || 'id';
-    track.src   = sub.url || sub.file || sub.src || '';
-    if (idSub && sub === idSub) {
-      track.default = true;
-      track.mode    = 'showing';
-    }
-    player.appendChild(track);
-  });
-
-  setSubStatus(idSub ? 'active' : 'available');
-}
-
-function setSubStatus(state) {
-  const el = document.getElementById('subStatus');
-  if (state === 'loading') {
-    el.className = 'sub-notice';
-    el.innerHTML = `<i class="bi bi-badge-cc"></i> Sub ID: Memeriksa...`;
-  } else if (state === 'active') {
-    el.className = 'sub-notice active';
-    el.innerHTML = `<i class="bi bi-badge-cc-fill"></i> Sub Indonesia Aktif ✓`;
-  } else if (state === 'available') {
-    el.className = 'sub-notice';
-    el.innerHTML = `<i class="bi bi-badge-cc"></i> Subtitle Tersedia`;
-  } else {
-    el.className = 'sub-notice';
-    el.innerHTML = `<i class="bi bi-badge-cc"></i> Tanpa Subtitle`;
-    el.style.opacity = '.5';
-  }
-}
-
-/* ── PLAY SOURCE WITH HLS.JS (used for SPlay HLS) ── */
-async function playSource(source) {
-  const player      = document.getElementById('mainPlayer');
-  const placeholder = document.getElementById('playerPlaceholder');
-  const embedPlayer = document.getElementById('embedPlayer');
-
-  // Switch from embed to native player
-  embedPlayer.style.display = 'none';
-  embedPlayer.src = '';
-
-  // Destroy old HLS instance
+/* ── PLAY SOURCE VIA HLS.js ── */
+async function playSource(url, quality) {
+  const pl = document.getElementById('mainPlayer');
+  const ld = document.getElementById('playerLoader');
+  const ph = document.getElementById('playerPlaceholder');
   if (hls) { hls.destroy(); hls = null; }
 
-  const url     = source.url || source.src || source.stream_url || '';
-  const isM3U8  = source.type === 'hls' || url.includes('.m3u8');
-  const headers = source.headers || {};
+  const isHLS = quality === 'hls' || url.includes('.m3u8');
 
-  if (isM3U8 && Hls.isSupported()) {
-    hls = new Hls({
-      maxBufferLength: 30,
-      enableWorker: true,
-      xhrSetup: (xhr) => {
-        if (headers.Referer)   xhr.setRequestHeader('Referer', headers.Referer);
-        if (headers.Origin)    xhr.setRequestHeader('Origin', headers.Origin);
-        if (headers.UserAgent) xhr.setRequestHeader('User-Agent', headers.UserAgent);
+  if (isHLS && Hls.isSupported()) {
+    hls = new Hls({ enableWorker:true, maxBufferLength:30 });
+    hls.loadSource(url);
+    hls.attachMedia(pl);
+    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+      ld.style.display = 'none'; pl.style.display = 'block';
+      if (activeSubTrack) loadSubTrack(activeSubTrack);
+      pl.play().catch(() => {});
+    });
+    hls.on(Hls.Events.ERROR, (_, d) => {
+      if (d.fatal) {
+        ld.style.display = 'none'; ph.style.display = 'flex';
+        ph.innerHTML = '<i class="bi bi-exclamation-circle"></i><p>Error HLS. Coba kualitas lain.</p>';
       }
     });
-    hls.loadSource(url);
-    hls.attachMedia(player);
-
-    await new Promise((resolve, reject) => {
-      hls.on(Hls.Events.MANIFEST_PARSED, () => resolve());
-      hls.on(Hls.Events.ERROR, (e, d) => {
-        if (d.fatal) reject(new Error(`HLS fatal: ${d.type}`));
-      });
-      setTimeout(() => reject(new Error('Timeout')), 15000);
-    });
-
-    showPlayerLoader(false);
-    placeholder.style.display = 'none';
-    player.style.display = 'block';
-    player.play().catch(() => {});
-
-  } else if (player.canPlayType('application/vnd.apple.mpegurl') || !isM3U8) {
+  } else if (pl.canPlayType('application/vnd.apple.mpegurl') || !isHLS) {
     // Native HLS (Safari) or MP4
-    player.src = url;
-    player.style.display = 'block';
-    placeholder.style.display = 'none';
-    showPlayerLoader(false);
-    player.play().catch(() => {});
-
+    pl.src = url; pl.style.display = 'block'; ld.style.display = 'none';
+    if (activeSubTrack) loadSubTrack(activeSubTrack);
+    pl.play().catch(() => {});
   } else {
-    showPlayerLoader(false);
-    showPlayerError('Format video tidak didukung oleh browser ini. Coba browser lain.');
+    ld.style.display = 'none'; ph.style.display = 'flex';
+    ph.innerHTML = '<i class="bi bi-exclamation-circle"></i><p>Format tidak didukung browser ini.</p>';
   }
 }
 
-/* ── UI HELPERS ── */
-function showPlayerLoader(show) {
-  const loader = document.getElementById('playerLoader');
-  loader.classList.toggle('show', show);
+/* ── SUBTITLE ── */
+function setSub(sub, btn) {
+  document.querySelectorAll('#subtitleTabs .sub-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  activeSubTrack = sub;
+  const pl = document.getElementById('mainPlayer');
+  Array.from(pl.querySelectorAll('track')).forEach(t => t.remove());
+  if (sub) loadSubTrack(sub);
+  else for (const t of pl.textTracks) t.mode = 'hidden';
 }
 
-function showPlayerError(msg) {
-  const placeholder = document.getElementById('playerPlaceholder');
-  const player = document.getElementById('mainPlayer');
-  player.style.display = 'none';
-  placeholder.style.display = 'flex';
-  placeholder.innerHTML = `
-    <i class="bi bi-exclamation-circle" style="color:rgba(230,57,70,.5)"></i>
-    <p>${msg}</p>`;
+function loadSubTrack(sub) {
+  if (!sub?.url) return;
+  const pl = document.getElementById('mainPlayer');
+  Array.from(pl.querySelectorAll('track')).forEach(t => t.remove());
+  const track = document.createElement('track');
+  const lang  = sub.lang || sub.language || 'id';
+  track.kind    = 'subtitles';
+  track.src     = sub.url;
+  track.srclang = lang;
+  track.label   = sub.label || (lang==='id'?'Indonesia':lang==='en'?'English':lang);
+  track.default = true;
+  pl.appendChild(track);
+  setTimeout(() => {
+    for (const t of pl.textTracks) t.mode = t.language === lang ? 'showing' : 'hidden';
+  }, 300);
 }
 
-function showEpError(msg) {
-  document.getElementById('epList').innerHTML = `
-    <div class="p-3">
-      <div class="status-note err mb-3"><i class="bi bi-exclamation-triangle me-2"></i>${msg}</div>
-    </div>`;
+/* ── NAVIGATE ── */
+function navigateEp(dir) {
+  const idx  = allEpisodes.findIndex(e => e.episode_number === currentEpNum);
+  const next = allEpisodes[idx + dir];
+  if (next) playEpisode(next.episode_number);
 }
 
-/* ── WATCHLIST / HISTORY ── */
-function saveWatchlist(anime) {
+/* ── HISTORY ── */
+function saveHist(epNum) {
   try {
-    let list = JSON.parse(localStorage.getItem('av_watchlist') || '[]');
-    if (!list.some(a => a.id === anime.id)) {
-      list.unshift({ id: anime.id, name: anime.name, cover_url: anime.cover_url, score: anime.anilist_data?.averageScore, saved_at: new Date().toISOString() });
-      localStorage.setItem('av_watchlist', JSON.stringify(list));
-      alert('✅ Ditambahkan ke watchlist!');
+    let h = JSON.parse(localStorage.getItem('av_history')||'[]');
+    h = h.filter(x => x.id !== ANIME_ID);
+    h.unshift({ id:resolvedId, mal_id:resolvedId, title:ANIME_TITLE, ep_num:epNum, viewedAt:Date.now() });
+    localStorage.setItem('av_history', JSON.stringify(h.slice(0,100)));
+  } catch(e) {}
+}
+
+function saveWL(data) {
+  try {
+    const wl = JSON.parse(localStorage.getItem('av_watchlist')||'{}');
+    if (!wl[data.id]) {
+      wl[data.id] = { ...data, status:'watching', addedAt:Date.now() };
+      localStorage.setItem('av_watchlist', JSON.stringify(wl));
+      alert('\u2705 Ditambahkan ke watchlist!');
     } else {
-      alert('⭐ Anime ini sudah ada di watchlist kamu.');
+      alert('\u2B50 Sudah ada di watchlist kamu.');
     }
   } catch(e) {}
 }
 
-function saveHistory(ep) {
-  try {
-    let hist = JSON.parse(localStorage.getItem('av_history') || '[]');
-    hist = hist.filter(h => h.id !== ANIME_ID);
-    hist.unshift({ id: ANIME_ID, title: TITLE, ep_num: currentEpNum, image: ep.thumbnail_url || '', viewed_at: new Date().toISOString() });
-    hist = hist.slice(0, 50);
-    localStorage.setItem('av_history', JSON.stringify(hist));
-  } catch(e) {}
-}
+/* ── KEYBOARD SHORTCUTS ── */
+document.addEventListener('keydown', e => {
+  const pl = document.getElementById('mainPlayer');
+  if (!pl || pl.style.display==='none') return;
+  if (['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)) return;
+  if (e.key==='ArrowRight') pl.currentTime += 10;
+  if (e.key==='ArrowLeft')  pl.currentTime -= 10;
+  if (e.key===' ') { e.preventDefault(); pl.paused ? pl.play() : pl.pause(); }
+  if (e.key==='n'||e.key==='N') navigateEp(1);
+  if (e.key==='p'||e.key==='P') navigateEp(-1);
+});
 
-/* ── START ── */
 init();
 </script>
 </body>
