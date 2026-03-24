@@ -231,34 +231,16 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 /* ════════════════════════════════════════════════════
-   AnimeVerse Watch Page — SPlay API Streaming
-   Endpoints:
-     GET /api/anime/:id          → detail
-     GET /api/anime/:id/episodes → episode list (paginated, subtitle info)
-     GET /api/anime/:id/episodes/:ep → stream sources (HLS/MP4) + subtitles
+   AnimeVerse Watch Page
+   Data:      Jikan API (MyAnimeList) — gratis, no CORS
+   Streaming: Embed iframe (vidsrc.xyz, dll) — no API key
+   SPlay:     Aktifkan setelah whitelist domain di dashboard
 ════════════════════════════════════════════════════ */
-const SPLAY_BASE = 'https://hub.splay.id';
-const SPLAY_KEY  = 'sk_live_2355bb1f4e3cca896b15f6a740e377af95bcc4ad114833f7';
-
 const JIKAN_BASE = 'https://api.jikan.moe/v4';
 
-// Coba SPlay langsung → corsproxy → allorigins
-const splayFetch = async (path) => {
-  const fullUrl = SPLAY_BASE + path;
-  const hdrs = { 'Authorization': `Bearer ${SPLAY_KEY}`, 'x-api-key': SPLAY_KEY };
-  const attempts = [
-    () => fetch(fullUrl, { headers: hdrs }),
-    () => fetch(`https://corsproxy.io/?${encodeURIComponent(fullUrl)}`, { headers: hdrs }),
-    () => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(fullUrl)}`)
-  ];
-  for (const attempt of attempts) {
-    try {
-      const res = await attempt();
-      if (res.ok) return res;
-    } catch(e) {}
-  }
-  throw new Error('SPlay tidak dapat dijangkau');
-};
+// SPlay disabled — belum di-whitelist dari domain ini
+// Daftarkan domain di: https://hub.splay.id/dashboard → Allowed Origins
+const splayFetch = async () => { throw new Error('SPlay belum aktif'); };
 
 // Jikan: fallback untuk info anime (pakai MAL ID jika numerik)
 async function jikanAnimeInfo() {
@@ -310,16 +292,9 @@ async function init() {
 async function loadAnimeInfo() {
   try {
     let a;
-    try {
-      const res = await splayFetch(`/api/anime/${ANIME_ID}`);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const raw = await res.json();
-      a = raw.data || raw;
-    } catch(eSplay) {
-      console.warn('SPlay info gagal, pakai Jikan:', eSplay.message);
-      a = await jikanAnimeInfo();
-      if (!a) throw eSplay;
-    }
+    // Langsung Jikan (cepat, tidak ada CORS issue)
+    a = await jikanAnimeInfo();
+    if (!a) throw new Error('Jikan tidak mengembalikan data');
 
     const title   = a.name || TITLE;
     const score   = a.anilist_data?.averageScore;
@@ -355,21 +330,68 @@ async function loadAnimeInfo() {
   }
 }
 
-/* ── JIKAN EPISODE FALLBACK ── */
-// Jikan doesn't give stream URLs but gives episode list structure
+/* ── JIKAN EPISODES ── */
 async function jikanEpisodes(malId) {
-  if (!/^\d+$/.test(malId)) return [];
-  const res = await fetch(`${JIKAN_BASE}/anime/${malId}/episodes`);
-  if (!res.ok) return [];
-  const data = await res.json();
-  const eps = data.data || [];
-  return eps.map(ep => ({
-    episode_number: ep.mal_id,
-    number: ep.mal_id,
-    title: ep.title || ep.title_romanji || `Episode ${ep.mal_id}`,
-    thumbnail_url: ep.images?.jpg?.image_url || null,
-    has_subtitle_id: false,
-    subtitle_tracks: []
+  if (!/^\d+$/.test(malId)) {
+    // Non-numeric ID → create fake episode list based on anime detail
+    return generateEpisodeList(malId);
+  }
+
+  // Get total episode count from anime detail first
+  let totalEps = 0;
+  try {
+    const detailRes = await fetch(`${JIKAN_BASE}/anime/${malId}`);
+    if (detailRes.ok) {
+      const det = await detailRes.json();
+      totalEps = det.data?.episodes || 0;
+    }
+  } catch(e) {}
+
+  // Fetch episode list (paginated, max 100 per page)
+  let allEps = [];
+  let page = 1;
+  while (true) {
+    try {
+      const res = await fetch(`${JIKAN_BASE}/anime/${malId}/episodes?page=${page}`);
+      if (!res.ok) break;
+      const data = await res.json();
+      const eps = data.data || [];
+      if (!eps.length) break;
+
+      allEps = [...allEps, ...eps.map(ep => ({
+        episode_number: ep.mal_id,
+        number: ep.mal_id,
+        title: ep.title || ep.title_romanji || `Episode ${ep.mal_id}`,
+        thumbnail_url: ep.images?.jpg?.image_url || null,
+        has_subtitle_id: false,
+        subtitle_tracks: []
+      }))];
+
+      // Check if there are more pages
+      if (!data.pagination?.has_next_page || page >= 5) break;
+      page++;
+      await new Promise(r => setTimeout(r, 350)); // Jikan rate limit
+    } catch(e) { break; }
+  }
+
+  // If Jikan has no episode list (some anime lack it), generate from total count
+  if (!allEps.length && totalEps > 0) {
+    allEps = Array.from({ length: totalEps }, (_, i) => ({
+      episode_number: i + 1, number: i + 1,
+      title: `Episode ${i + 1}`, thumbnail_url: null,
+      has_subtitle_id: false, subtitle_tracks: []
+    }));
+  }
+
+  return allEps;
+}
+
+// Generate episode list when we only know the count (no Jikan episode data)
+async function generateEpisodeList(animeId) {
+  return Array.from({ length: 12 }, (_, i) => ({
+    episode_number: i + 1, number: i + 1,
+    title: `Episode ${i + 1}`, thumbnail_url: null,
+    has_subtitle_id: false, subtitle_tracks: []
   }));
 }
 
@@ -377,28 +399,13 @@ async function jikanEpisodes(malId) {
 async function loadEpisodes() {
   try {
     let allEps = [];
-    let splayOk = false;
+    const splayOk = false; // SPlay belum di-whitelist, langsung Jikan
 
-    // Try SPlay episodes
+    // Ambil daftar episode dari Jikan (cepat & reliable)
     try {
-      let page = 1, total_pages = 1;
-      do {
-        const res = await splayFetch(`/api/anime/${ANIME_ID}/episodes?page=${page}&per_page=100`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const list = Array.isArray(data) ? data : (data.data || []);
-        total_pages = data.meta?.total_pages || 1;
-        allEps = [...allEps, ...list];
-        page++;
-      } while (page <= total_pages && page <= 5);
-      if (allEps.length) splayOk = true;
-    } catch(eSplay) {
-      console.warn('SPlay episodes gagal, coba Jikan:', eSplay.message);
-    }
-
-    // Jikan fallback for episode list
-    if (!allEps.length) {
       allEps = await jikanEpisodes(ANIME_ID);
+    } catch(e) {
+      console.warn('Jikan episodes error:', e.message);
     }
 
     allEpisodes = allEps;
@@ -474,30 +481,32 @@ function filterEpisodes() {
    EMBED SERVERS — pakai MAL ID + episode num
    Tidak butuh API key, langsung jalan.
 ════════════════════════════════════════════ */
+// Server embed — pakai MAL ID, tidak butuh API key
 const EMBED_SERVERS = [
   {
-    name: 'Server 1',
-    label: '🟣 Sub ID',
-    getUrl: (malId, ep) => `https://embed.su/embed/anime/${malId}/${ep}`,
+    label: '🟣 VidSrc',
+    getUrl: (malId, ep) => `https://vidsrc.xyz/embed/anime?malId=${malId}&episode=${ep}`,
     hasSub: true
   },
   {
-    name: 'Server 2',
-    label: '🔵 Multi-sub',
-    getUrl: (malId, ep) => `https://2anime.xyz/embed/${malId}/${ep}`,
+    label: '🔵 VidSrc 2',
+    getUrl: (malId, ep) => `https://vidsrc.me/embed/anime?malId=${malId}&ep=${ep}`,
     hasSub: true
   },
   {
-    name: 'Server 3',
-    label: '🟢 Backup',
-    getUrl: (malId, ep) => `https://4anime.gg/embed/${malId}/${ep}`,
+    label: '🟢 VidSrc 3',
+    getUrl: (malId, ep) => `https://vidsrc.to/embed/anime/${malId}/${ep}`,
+    hasSub: true
+  },
+  {
+    label: '🟡 AnimeZ',
+    getUrl: (malId, ep) => `https://www.animez.xyz/embed/${malId}/${ep}`,
     hasSub: false
   },
   {
-    name: 'Server 4',
-    label: '🟡 Alt',
-    getUrl: (malId, ep) => `https://www.anify.tv/embed?id=${malId}&num=${ep}&providerId=gogoanime&watchId=&type=anime`,
-    hasSub: false
+    label: '⚪ Aniwave',
+    getUrl: (malId, ep) => `https://aniwatchtv.to/embed/anime?id=${malId}&ep=${ep}`,
+    hasSub: true
   }
 ];
 
@@ -558,42 +567,9 @@ function loadEmbedPlayer(malId, epNum, serverIdx) {
 
 /* ── TRY SPLAY IN BACKGROUND ── */
 async function trySPlayStream(epNum) {
-  // SPlay needs slug ID, not MAL ID — skip if ANIME_ID is numeric
-  if (/^\d+$/.test(ANIME_ID)) return; // MAL ID → can't use SPlay directly
-
-  try {
-    const ctrl = new AbortController();
-    setTimeout(() => ctrl.abort(), 5000);
-    const res = await splayFetch(`/api/anime/${ANIME_ID}/episodes/${epNum}`);
-    if (!res.ok) return;
-    const text = await res.text();
-    // Check if it's actually JSON (not HTML error page)
-    if (text.trim().startsWith('<')) return;
-    const data = JSON.parse(text);
-    const ep = data.data || data;
-    currentSources = ep.sources || ep.video_sources || [];
-    if (!currentSources.length) return;
-
-    // Add SPlay HLS button to server tabs
-    const tabs = document.getElementById('serverTabs');
-    currentSources.slice(0, 2).forEach((src, i) => {
-      const btn = document.createElement('button');
-      btn.className = 'server-btn';
-      btn.innerHTML = `⚡ SPlay ${src.quality || 'HLS'}`;
-      btn.onclick = () => {
-        document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        // Switch to HLS video player
-        const embedPlayer = document.getElementById('embedPlayer');
-        embedPlayer.style.display = 'none';
-        embedPlayer.src = '';
-        playSource(src);
-      };
-      tabs.appendChild(btn);
-    });
-  } catch(e) {
-    // Silently ignore SPlay failure
-  }
+  // Disabled — SPlay belum di-whitelist dari domain ini
+  // Aktifkan setelah whitelist domain di hub.splay.id/dashboard
+  return;
 }
 
 /* ── RENDER EMBED SERVER TABS ── */
