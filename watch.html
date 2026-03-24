@@ -232,15 +232,46 @@
 <script>
 /* ════════════════════════════════════════════════════
    AnimeVerse Watch Page
-   Data:      Jikan API (MyAnimeList) — gratis, no CORS
-   Streaming: Embed iframe (vidsrc.xyz, dll) — no API key
-   SPlay:     Aktifkan setelah whitelist domain di dashboard
+   Streaming: SPlay API (hub.splay.id) — pakai API key kamu
+   Data:      Jikan API (MyAnimeList) — fallback info anime
 ════════════════════════════════════════════════════ */
+const SPLAY_BASE = 'https://hub.splay.id';
+const SPLAY_KEY  = 'sk_live_2355bb1f4e3cca896b15f6a740e377af95bcc4ad114833f7';
 const JIKAN_BASE = 'https://api.jikan.moe/v4';
 
-// SPlay disabled — belum di-whitelist dari domain ini
-// Daftarkan domain di: https://hub.splay.id/dashboard → Allowed Origins
-const splayFetch = async () => { throw new Error('SPlay belum aktif'); };
+const splayFetch = (path) => fetch(`${SPLAY_BASE}${path}`, {
+  headers: { 'Authorization': `Bearer ${SPLAY_KEY}` }
+});
+
+// Cache slug SPlay supaya tidak fetch ulang
+const slugCache = {};
+
+/* ── CARI SLUG SPLAY dari judul anime ── */
+async function getSplaySlug(title, malId) {
+  const cacheKey = malId || title;
+  if (slugCache[cacheKey]) return slugCache[cacheKey];
+
+  try {
+    const q = encodeURIComponent(title.replace(/Season \d+|Part \d+/gi, '').trim());
+    const res = await splayFetch(`/api/anime/search?q=${q}&per_page=5`);
+    if (!res.ok) throw new Error(`Search HTTP ${res.status}`);
+    const text = await res.text();
+    if (text.trim().startsWith('<')) throw new Error('SPlay response bukan JSON');
+    const data = JSON.parse(text);
+    const list = Array.isArray(data) ? data : (data.data || []);
+    if (!list.length) throw new Error('Tidak ada hasil di SPlay');
+
+    // Ambil hasil pertama (paling relevan)
+    const slug = list[0].id || list[0].slug;
+    if (!slug) throw new Error('Slug tidak ditemukan');
+    slugCache[cacheKey] = slug;
+    console.log(`✅ SPlay slug: ${slug} untuk "${title}"`);
+    return slug;
+  } catch(e) {
+    console.warn('Gagal dapat SPlay slug:', e.message);
+    return null;
+  }
+}
 
 // Jikan: fallback untuk info anime (pakai MAL ID jika numerik)
 async function jikanAnimeInfo() {
@@ -292,9 +323,31 @@ async function init() {
 async function loadAnimeInfo() {
   try {
     let a;
-    // Langsung Jikan (cepat, tidak ada CORS issue)
-    a = await jikanAnimeInfo();
-    if (!a) throw new Error('Jikan tidak mengembalikan data');
+
+    // Coba SPlay dulu untuk data lengkap
+    try {
+      const slug = await getSplaySlug(TITLE, ANIME_ID);
+      if (slug) {
+        const res = await splayFetch(`/api/anime/${slug}`);
+        if (res.ok) {
+          const text = await res.text();
+          if (!text.trim().startsWith('<')) {
+            const raw = JSON.parse(text);
+            a = raw.data || raw;
+            console.log('✅ Info dari SPlay');
+          }
+        }
+      }
+    } catch(eSplay) {
+      console.warn('SPlay info gagal, pakai Jikan:', eSplay.message);
+    }
+
+    // Fallback Jikan
+    if (!a) {
+      a = await jikanAnimeInfo();
+      if (!a) throw new Error('Tidak ada data anime');
+      console.log('📡 Info dari Jikan');
+    }
 
     const title   = a.name || TITLE;
     const score   = a.anilist_data?.averageScore;
@@ -399,13 +452,36 @@ async function generateEpisodeList(animeId) {
 async function loadEpisodes() {
   try {
     let allEps = [];
-    const splayOk = false; // SPlay belum di-whitelist, langsung Jikan
 
-    // Ambil daftar episode dari Jikan (cepat & reliable)
+    // 1. Coba SPlay episode list dulu (punya thumbnail + subtitle info)
     try {
-      allEps = await jikanEpisodes(ANIME_ID);
-    } catch(e) {
-      console.warn('Jikan episodes error:', e.message);
+      const slug = await getSplaySlug(TITLE, ANIME_ID);
+      if (slug) {
+        const res = await splayFetch(`/api/anime/${slug}/episodes?per_page=100`);
+        if (res.ok) {
+          const text = await res.text();
+          if (!text.trim().startsWith('<')) {
+            const data = JSON.parse(text);
+            const list = Array.isArray(data) ? data : (data.data || []);
+            if (list.length) {
+              allEps = list;
+              console.log(`✅ Episode dari SPlay: ${allEps.length} ep`);
+            }
+          }
+        }
+      }
+    } catch(eSplay) {
+      console.warn('SPlay episode list gagal:', eSplay.message);
+    }
+
+    // 2. Jika SPlay kosong → Jikan fallback
+    if (!allEps.length) {
+      try {
+        allEps = await jikanEpisodes(ANIME_ID);
+        console.log(`📡 Episode dari Jikan: ${allEps.length} ep`);
+      } catch(e) {
+        console.warn('Jikan episodes error:', e.message);
+      }
     }
 
     allEpisodes = allEps;
@@ -565,11 +641,86 @@ function loadEmbedPlayer(malId, epNum, serverIdx) {
   activeServerIdx = serverIdx;
 }
 
-/* ── TRY SPLAY IN BACKGROUND ── */
+/* ── LOAD STREAM DARI SPLAY (utama) ── */
 async function trySPlayStream(epNum) {
-  // Disabled — SPlay belum di-whitelist dari domain ini
-  // Aktifkan setelah whitelist domain di hub.splay.id/dashboard
-  return;
+  // Dapatkan slug SPlay dari title anime
+  const slug = await getSplaySlug(TITLE, ANIME_ID);
+  if (!slug) {
+    console.warn('Tidak dapat slug SPlay, embed player tetap aktif');
+    return;
+  }
+
+  try {
+    const res = await splayFetch(`/api/anime/${slug}/episodes/${epNum}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const text = await res.text();
+    if (text.trim().startsWith('<')) throw new Error('Response HTML bukan JSON');
+    const data = JSON.parse(text);
+    const ep = data.data || data;
+
+    // Sources dari SPlay: { url, quality, type: 'hls'|'mp4' }
+    const sources = ep.sources || ep.video_sources || ep.stream_urls || [];
+    const subs    = ep.subtitle_tracks || ep.subtitles || [];
+
+    if (!sources.length) {
+      console.warn('SPlay tidak ada sumber video untuk ep', epNum);
+      return;
+    }
+
+    console.log(`✅ SPlay stream tersedia: ${sources.length} sumber`);
+    currentSources = sources;
+
+    // Tampilkan subtitle Indonesia jika ada
+    if (subs.length) {
+      handleSubtitles(subs);
+      const idSub = subs.find(s =>
+        (s.language||s.lang||'').toLowerCase() === 'id' ||
+        (s.label||'').toLowerCase().includes('indo')
+      );
+      setSubStatus(idSub ? 'active' : 'available');
+    }
+
+    // Tambahkan tombol SPlay HLS ke server tabs
+    const tabs = document.getElementById('serverTabs');
+    sources.slice(0, 3).forEach((src, i) => {
+      const label = src.quality || (src.type === 'hls' ? 'HLS' : 'MP4') || `SPlay ${i+1}`;
+      const btn = document.createElement('button');
+      btn.className = 'server-btn';
+      btn.style.cssText = 'border-color:#7250dc;color:#b09ef5;';
+      btn.innerHTML = `⚡ ${label}`;
+      btn.onclick = () => {
+        document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        // Switch dari iframe ke native video player
+        const embedPlayer = document.getElementById('embedPlayer');
+        embedPlayer.style.display = 'none';
+        embedPlayer.src = '';
+        showPlayerLoader(true);
+        playSource(src);
+      };
+      tabs.appendChild(btn);
+    });
+
+    // Jika sumber HLS ada → langsung switch ke native player (kualitas lebih baik)
+    const hlsSrc = sources.find(s => s.type === 'hls' || (s.url||'').includes('.m3u8'));
+    if (hlsSrc) {
+      console.log('✅ Auto-switch ke SPlay HLS player');
+      const embedPlayer = document.getElementById('embedPlayer');
+      embedPlayer.style.display = 'none';
+      embedPlayer.src = '';
+      showPlayerLoader(true);
+      // Tandai tombol pertama SPlay sebagai aktif
+      setTimeout(() => {
+        document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
+        const splayBtns = [...tabs.querySelectorAll('.server-btn')].filter(b => b.textContent.includes('⚡'));
+        if (splayBtns[0]) splayBtns[0].classList.add('active');
+      }, 100);
+      await playSource(hlsSrc);
+    }
+
+  } catch(e) {
+    console.warn('SPlay stream gagal:', e.message, '— embed player tetap aktif');
+  }
 }
 
 /* ── RENDER EMBED SERVER TABS ── */
