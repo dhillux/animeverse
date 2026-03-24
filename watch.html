@@ -31,7 +31,7 @@
       display: flex; flex-direction: column; align-items: center;
       justify-content: center; gap: 1rem; color: rgba(255,255,255,.4);
       background: linear-gradient(135deg, #0a0518, #0f0f1a);
-      width: 100%; height: 100%; position: absolute; inset: 0;
+      width: 100%; height: 100%; position: absolute; inset: 0; z-index: 1;
     }
     .player-placeholder i { font-size: 5rem; color: rgba(114,80,220,.4); }
     .player-placeholder p { font-family: 'Oswald', sans-serif; letter-spacing: 1px; font-size: .9rem; text-align: center; max-width: 320px; }
@@ -172,18 +172,26 @@
           <div class="av-loader"></div>
           <p style="font-family:'Oswald',sans-serif;letter-spacing:1px;font-size:.85rem;color:rgba(255,255,255,.5)">Memuat stream...</p>
         </div>
-        <video id="mainPlayer" controls crossorigin="anonymous">
+        <!-- IFRAME EMBED PLAYER (primary) -->
+        <iframe id="embedPlayer"
+          style="display:none;width:100%;height:100%;border:none;background:#000"
+          allowfullscreen
+          allow="autoplay; fullscreen; picture-in-picture"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation">
+        </iframe>
+        <!-- HTML5 VIDEO (fallback / SPlay HLS) -->
+        <video id="mainPlayer" controls crossorigin="anonymous" style="display:none;width:100%;height:100%">
           Browser tidak mendukung HTML5 video.
         </video>
       </div>
 
-      <!-- SERVER + QUALITY + SUBTITLE -->
+      <!-- SERVER TABS -->
       <div class="server-row">
         <span class="server-label">Server:</span>
         <div id="serverTabs" class="d-flex gap-1 flex-wrap"></div>
         <div class="ms-auto d-flex align-items-center gap-2 flex-wrap">
           <span id="subStatus" class="sub-notice">
-            <i class="bi bi-badge-cc"></i> Sub ID: Memuat...
+            <i class="bi bi-badge-cc"></i> Sub ID
           </span>
         </div>
       </div>
@@ -404,15 +412,11 @@ async function loadEpisodes() {
     document.getElementById('epCount').textContent = `${allEps.length} Ep`;
     renderEpisodeList(allEps);
 
-    // Auto-play first episode (only if SPlay available for streams)
-    if (allEps.length > 0 && splayOk) {
+    // Auto-play first episode (embed player always works)
+    if (allEps.length > 0) {
       const firstEp = allEps[0];
-      playEpisode(firstEp.episode_number || firstEp.number || 1);
-    } else if (allEps.length > 0) {
-      // SPlay not available, show info
-      document.getElementById('playerPlaceholder').innerHTML = `
-        <i class="bi bi-collection-play"></i>
-        <p>Pilih episode untuk mencoba stream.<br><small style="opacity:.5">SPlay tidak dapat dijangkau — stream mungkin tidak tersedia</small></p>`;
+      const firstNum = firstEp.episode_number || firstEp.number || 1;
+      playEpisode(firstNum);
     }
 
   } catch(e) {
@@ -466,6 +470,39 @@ function filterEpisodes() {
   }
 }
 
+/* ════════════════════════════════════════════
+   EMBED SERVERS — pakai MAL ID + episode num
+   Tidak butuh API key, langsung jalan.
+════════════════════════════════════════════ */
+const EMBED_SERVERS = [
+  {
+    name: 'Server 1',
+    label: '🟣 Sub ID',
+    getUrl: (malId, ep) => `https://embed.su/embed/anime/${malId}/${ep}`,
+    hasSub: true
+  },
+  {
+    name: 'Server 2',
+    label: '🔵 Multi-sub',
+    getUrl: (malId, ep) => `https://2anime.xyz/embed/${malId}/${ep}`,
+    hasSub: true
+  },
+  {
+    name: 'Server 3',
+    label: '🟢 Backup',
+    getUrl: (malId, ep) => `https://4anime.gg/embed/${malId}/${ep}`,
+    hasSub: false
+  },
+  {
+    name: 'Server 4',
+    label: '🟡 Alt',
+    getUrl: (malId, ep) => `https://www.anify.tv/embed?id=${malId}&num=${ep}&providerId=gogoanime&watchId=&type=anime`,
+    hasSub: false
+  }
+];
+
+let activeServerIdx = 0;
+
 /* ── PLAY EPISODE ── */
 async function playEpisode(epNum) {
   // Highlight in sidebar
@@ -476,52 +513,99 @@ async function playEpisode(epNum) {
     el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
   currentEpNum = epNum;
+  activeServerIdx = 0;
 
-  // Show loader
   showPlayerLoader(true);
-  document.getElementById('serverTabs').innerHTML = '';
   setSubStatus('loading');
 
+  // Render server tabs
+  renderEmbedServerTabs(epNum);
+
+  // Play with first embed server
+  loadEmbedPlayer(ANIME_ID, epNum, 0);
+
+  // Try SPlay in background (for HLS option) — fire and forget
+  trySPlayStream(epNum);
+
+  // Save history
+  saveHistory({ episode_number: epNum });
+}
+
+/* ── LOAD EMBED PLAYER ── */
+function loadEmbedPlayer(malId, epNum, serverIdx) {
+  const server = EMBED_SERVERS[serverIdx] || EMBED_SERVERS[0];
+  const embedUrl = server.getUrl(malId, epNum);
+
+  const embedPlayer = document.getElementById('embedPlayer');
+  const videoPlayer = document.getElementById('mainPlayer');
+  const placeholder = document.getElementById('playerPlaceholder');
+
+  // Hide video, show iframe
+  videoPlayer.style.display = 'none';
+  placeholder.style.display = 'none';
+  embedPlayer.style.display = 'block';
+  embedPlayer.src = embedUrl;
+
+  showPlayerLoader(false);
+  setSubStatus(server.hasSub ? 'active' : 'available');
+
+  // Highlight active tab
+  document.querySelectorAll('.server-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === serverIdx);
+  });
+  activeServerIdx = serverIdx;
+}
+
+/* ── TRY SPLAY IN BACKGROUND ── */
+async function trySPlayStream(epNum) {
+  // SPlay needs slug ID, not MAL ID — skip if ANIME_ID is numeric
+  if (/^\d+$/.test(ANIME_ID)) return; // MAL ID → can't use SPlay directly
+
   try {
+    const ctrl = new AbortController();
+    setTimeout(() => ctrl.abort(), 5000);
     const res = await splayFetch(`/api/anime/${ANIME_ID}/episodes/${epNum}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-
-    // Sources: array of { url, quality, type: 'hls'|'mp4', ... }
+    if (!res.ok) return;
+    const text = await res.text();
+    // Check if it's actually JSON (not HTML error page)
+    if (text.trim().startsWith('<')) return;
+    const data = JSON.parse(text);
     const ep = data.data || data;
-    currentSources = ep.sources || ep.video_sources || ep.stream_urls || [];
-    currentSubs    = ep.subtitle_tracks || ep.subtitles || [];
+    currentSources = ep.sources || ep.video_sources || [];
+    if (!currentSources.length) return;
 
-    if (!currentSources.length) throw new Error('Tidak ada sumber video tersedia');
-
-    renderServerTabs(currentSources);
-    handleSubtitles(currentSubs);
-
-    // Play best quality (prefer HLS)
-    const hlsSrc = currentSources.find(s => s.type === 'hls' || s.url?.includes('.m3u8'));
-    const src    = hlsSrc || currentSources[0];
-    await playSource(src);
-
-    // Add to history
-    saveHistory(ep);
-
+    // Add SPlay HLS button to server tabs
+    const tabs = document.getElementById('serverTabs');
+    currentSources.slice(0, 2).forEach((src, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'server-btn';
+      btn.innerHTML = `⚡ SPlay ${src.quality || 'HLS'}`;
+      btn.onclick = () => {
+        document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        // Switch to HLS video player
+        const embedPlayer = document.getElementById('embedPlayer');
+        embedPlayer.style.display = 'none';
+        embedPlayer.src = '';
+        playSource(src);
+      };
+      tabs.appendChild(btn);
+    });
   } catch(e) {
-    showPlayerLoader(false);
-    showPlayerError(`Gagal memuat episode ${epNum}: ${e.message}`);
-    setSubStatus('none');
+    // Silently ignore SPlay failure
   }
 }
 
-/* ── RENDER SERVER TABS ── */
-function renderServerTabs(sources) {
+/* ── RENDER EMBED SERVER TABS ── */
+function renderEmbedServerTabs(epNum) {
   const tabs = document.getElementById('serverTabs');
-  tabs.innerHTML = sources.map((src, i) => {
-    const label = src.quality || (src.type === 'hls' ? 'HLS' : 'MP4') || `Server ${i+1}`;
-    return `<button class="server-btn ${i===0?'active':''}" onclick="switchSource(${i}, this)">${label}</button>`;
-  }).join('');
+  tabs.innerHTML = EMBED_SERVERS.map((s, i) =>
+    `<button class="server-btn ${i===0?'active':''}" onclick="loadEmbedPlayer('${ANIME_ID}', ${epNum}, ${i})">${s.label}</button>`
+  ).join('');
 }
 
 async function switchSource(idx, btn) {
+  // Legacy for HLS sources
   document.querySelectorAll('.server-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
   if (currentSources[idx]) {
@@ -582,10 +666,15 @@ function setSubStatus(state) {
   }
 }
 
-/* ── PLAY SOURCE WITH HLS.JS ── */
+/* ── PLAY SOURCE WITH HLS.JS (used for SPlay HLS) ── */
 async function playSource(source) {
   const player      = document.getElementById('mainPlayer');
   const placeholder = document.getElementById('playerPlaceholder');
+  const embedPlayer = document.getElementById('embedPlayer');
+
+  // Switch from embed to native player
+  embedPlayer.style.display = 'none';
+  embedPlayer.src = '';
 
   // Destroy old HLS instance
   if (hls) { hls.destroy(); hls = null; }
