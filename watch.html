@@ -235,7 +235,7 @@
    Streaming: SPlay API (hub.splay.id) — pakai API key kamu
    Data:      Jikan API (MyAnimeList) — fallback info anime
 ════════════════════════════════════════════════════ */
-const SPLAY_BASE = 'https://hub.splay.id';
+const SPLAY_BASE = 'https://api.splay.id';
 const SPLAY_KEY  = 'sk_live_2355bb1f4e3cca896b15f6a740e377af95bcc4ad114833f7';
 const JIKAN_BASE = 'https://api.jikan.moe/v4';
 
@@ -252,20 +252,21 @@ async function getSplaySlug(title, malId) {
   if (slugCache[cacheKey]) return slugCache[cacheKey];
 
   try {
-    const q = encodeURIComponent(title.replace(/Season \d+|Part \d+/gi, '').trim());
-    const res = await splayFetch(`/api/anime/search?q=${q}&per_page=5`);
+    // Per SPlay docs: GET /api/anime/search?q=naruto&per_page=5
+    const cleanTitle = title.replace(/Season \d+|Part \d+/gi, '').trim();
+    const res = await splayFetch(`/api/anime/search?q=${encodeURIComponent(cleanTitle)}&per_page=5`);
     if (!res.ok) throw new Error(`Search HTTP ${res.status}`);
-    const text = await res.text();
-    if (text.trim().startsWith('<')) throw new Error('SPlay response bukan JSON');
-    const data = JSON.parse(text);
+    const data = await res.json();
+    // Response: { data: [...], meta: {...} }
     const list = Array.isArray(data) ? data : (data.data || []);
     if (!list.length) throw new Error('Tidak ada hasil di SPlay');
 
-    // Ambil hasil pertama (paling relevan)
-    const slug = list[0].id || list[0].slug;
+    // SPlay ID is a string slug: "one-piece", "frieren-beyond-journeys-end"
+    const best = list[0];
+    const slug = best.id || best.slug;
     if (!slug) throw new Error('Slug tidak ditemukan');
     slugCache[cacheKey] = slug;
-    console.log(`✅ SPlay slug: ${slug} untuk "${title}"`);
+    console.log(`✅ SPlay slug: "${slug}" (search: "${cleanTitle}")`);
     return slug;
   } catch(e) {
     console.warn('Gagal dapat SPlay slug:', e.message);
@@ -328,14 +329,12 @@ async function loadAnimeInfo() {
     try {
       const slug = await getSplaySlug(TITLE, ANIME_ID);
       if (slug) {
+        // Per docs: GET /api/anime/{id} → detail with AniList metadata
         const res = await splayFetch(`/api/anime/${slug}`);
         if (res.ok) {
-          const text = await res.text();
-          if (!text.trim().startsWith('<')) {
-            const raw = JSON.parse(text);
-            a = raw.data || raw;
-            console.log('✅ Info dari SPlay');
-          }
+          const raw = await res.json();
+          a = raw.data || raw;
+          console.log('✅ Info dari SPlay:', slug);
         }
       }
     } catch(eSplay) {
@@ -457,12 +456,11 @@ async function loadEpisodes() {
     try {
       const slug = await getSplaySlug(TITLE, ANIME_ID);
       if (slug) {
-        const res = await splayFetch(`/api/anime/${slug}/episodes?per_page=100`);
+        // Per docs: GET /api/anime/{id}/episodes?page=1&per_page=25
+      const res = await splayFetch(`/api/anime/${slug}/episodes?page=1&per_page=100`);
         if (res.ok) {
-          const text = await res.text();
-          if (!text.trim().startsWith('<')) {
-            const data = JSON.parse(text);
-            const list = Array.isArray(data) ? data : (data.data || []);
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : (data.data || []);
             if (list.length) {
               allEps = list;
               console.log(`✅ Episode dari SPlay: ${allEps.length} ep`);
@@ -651,16 +649,29 @@ async function trySPlayStream(epNum) {
   }
 
   try {
+    // Per SPlay docs: GET /api/anime/{slug}/episodes/{number}
+    // Returns: signed HLS URL + subtitle tracks
     const res = await splayFetch(`/api/anime/${slug}/episodes/${epNum}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const text = await res.text();
-    if (text.trim().startsWith('<')) throw new Error('Response HTML bukan JSON');
-    const data = JSON.parse(text);
+    const data = await res.json();
+    // Response shape from OpenAPI: episode with video_url, qualities, subtitle_url
     const ep = data.data || data;
 
-    // Sources dari SPlay: { url, quality, type: 'hls'|'mp4' }
-    const sources = ep.sources || ep.video_sources || ep.stream_urls || [];
-    const subs    = ep.subtitle_tracks || ep.subtitles || [];
+    // Handle both possible response shapes
+    let sources = [];
+    if (ep.qualities && typeof ep.qualities === 'object') {
+      // { qualities: { "1080p": "url", "720p": "url" } }
+      sources = Object.entries(ep.qualities).map(([q, url]) => ({
+        quality: q, url, type: url.includes('.m3u8') ? 'hls' : 'mp4'
+      }));
+    } else if (ep.video_url) {
+      sources = [{ quality: 'Auto', url: ep.video_url, type: ep.video_url.includes('.m3u8') ? 'hls' : 'mp4' }];
+    } else if (ep.sources) {
+      sources = ep.sources;
+    }
+
+    const subs = ep.subtitle_tracks || ep.subtitles ||
+      (ep.subtitle_url ? [{ url: ep.subtitle_url, language: 'id', label: 'Indonesia' }] : []);
 
     if (!sources.length) {
       console.warn('SPlay tidak ada sumber video untuk ep', epNum);

@@ -302,10 +302,9 @@
     <div class="d-flex align-items-center gap-2 flex-wrap">
       <span style="font-family:'Oswald',sans-serif;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4)">Origin:</span>
       <button class="origin-btn active" data-origin="" onclick="setOrigin('',this)">🌐 Semua</button>
-      <button class="origin-btn origin-jp" data-origin="jp" onclick="setOrigin('jp',this)">🇯🇵 Jepang</button>
-      <button class="origin-btn origin-cn" data-origin="cn" onclick="setOrigin('cn',this)">🇨🇳 China</button>
-      <button class="origin-btn origin-kr" data-origin="kr" onclick="setOrigin('kr',this)">🇰🇷 Korea</button>
-      <button class="origin-btn" data-origin="other" onclick="setOrigin('other',this)">🌏 Lainnya</button>
+      <button class="origin-btn origin-jp" data-origin="JP" onclick="setOrigin('JP',this)">🇯🇵 Jepang</button>
+      <button class="origin-btn origin-cn" data-origin="CN" onclick="setOrigin('CN',this)">🇨🇳 China</button>
+      <button class="origin-btn origin-kr" data-origin="KR" onclick="setOrigin('KR',this)">🇰🇷 Korea</button>
     </div>
   </div>
 </div>
@@ -412,7 +411,7 @@
     </div>
     <hr style="border-color:rgba(255,255,255,.08)"/>
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-      <span class="text-secondary" style="font-size:.8rem">© 2025 AnimeVerse. Powered by <a href="https://hub.splay.id" target="_blank" style="color:var(--mv-muted)">SPlay API</a>.</span>
+      <span class="text-secondary" style="font-size:.8rem">© 2025 AnimeVerse. Powered by <a href="https://api.splay.id" target="_blank" style="color:var(--mv-muted)">SPlay API</a>.</span>
       <span style="color:#7250dc;font-size:.8rem">Made with <i class="bi bi-heart-fill"></i> for anime lovers</span>
     </div>
   </div>
@@ -423,50 +422,22 @@
 <script>
 /* ═══════════════════════════════════════════════════
    AnimeVerse — SPlay API + Jikan Fallback
-   SPlay: https://hub.splay.id
+   SPlay: https://api.splay.id
    Key:   sk_live_2355bb1f4e3cca896b15f6a740e377af95bcc4ad114833f7
    Jikan: https://api.jikan.moe/v4 (fallback, no key needed)
 ════════════════════════════════════════════════════ */
-const SPLAY_BASE = 'https://hub.splay.id';
+/* ════════════════════════════════════════
+   SPlay API  — https://api.splay.id
+   Auth: Bearer sk_live_2355...
+   Docs: hub.splay.id/docs/anime/endpoints
+════════════════════════════════════════ */
+const SPLAY_BASE = 'https://api.splay.id';
 const SPLAY_KEY  = 'sk_live_2355bb1f4e3cca896b15f6a740e377af95bcc4ad114833f7';
 const JIKAN_BASE = 'https://api.jikan.moe/v4';
 
-// Gunakan CORS proxy jika bukan dari server production
-// (file://, localhost, 127.x.x.x, dll)
-const needsProxy = () =>
-  location.protocol === 'file:' ||
-  location.hostname === 'localhost' ||
-  location.hostname === '127.0.0.1' ||
-  location.hostname.startsWith('192.168.');
-
-// Coba SPlay dulu, jika gagal fallback ke Jikan
-let usingSplay = true;
-
-const splayFetch = async (path) => {
-  const fullUrl = SPLAY_BASE + path;
-  // Coba langsung dulu
-  const attempts = [
-    // 1. Direct (works if SPlay allows CORS from this origin)
-    () => fetch(fullUrl, {
-      headers: { 'Authorization': `Bearer ${SPLAY_KEY}`, 'x-api-key': SPLAY_KEY }
-    }),
-    // 2. Via corsproxy.io
-    () => fetch(`https://corsproxy.io/?${encodeURIComponent(fullUrl)}`, {
-      headers: { 'Authorization': `Bearer ${SPLAY_KEY}`, 'x-api-key': SPLAY_KEY }
-    }),
-    // 3. Via allorigins
-    () => fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(fullUrl)}`, {
-      headers: { 'Authorization': `Bearer ${SPLAY_KEY}`, 'x-api-key': SPLAY_KEY }
-    })
-  ];
-  for (const attempt of attempts) {
-    try {
-      const res = await attempt();
-      if (res.ok) return res;
-    } catch(e) { /* try next */ }
-  }
-  throw new Error('Semua proxy gagal');
-};
+const splayFetch = (path) => fetch(`${SPLAY_BASE}${path}`, {
+  headers: { 'Authorization': `Bearer ${SPLAY_KEY}` }
+});
 
 /* ── STATE ── */
 let currentSection = 'season';
@@ -544,7 +515,7 @@ function showSkeletons(n = 20) {
 
 /* ── RENDER CARD ── */
 function renderCard(a) {
-  const score = a.anilist_data?.averageScore;
+  const score = a.anilist_data?.averageScore; // 0-100 scale from SPlay/AniList
   const country = a.anilist_data?.countryOfOrigin || '';
   const status  = a.anilist_data?.status || '';
   const eps     = a.available_episodes || 0;
@@ -576,7 +547,7 @@ function renderCard(a) {
         <div class="anime-card-body">
           <div class="anime-card-title" title="${title.replace(/"/g,'')}">${title}</div>
           <div class="anime-card-genre">${country || 'Anime'} ${status === 'RELEASING' ? '· On Air' : ''}</div>
-          ${score ? `<div class="anime-card-score" style="color:${scoreColor(score)}"><i class="bi bi-star-fill" style="font-size:.6rem"></i> ${(score/10).toFixed(1)}/10</div>` : ''}
+          ${score ? `<div class="anime-card-score" style="color:${scoreColor(score)}"><i class="bi bi-star-fill" style="font-size:.6rem"></i> ${(score/10).toFixed(1)}</div>` : ''}
         </div>
       </div>
     </div>`;
@@ -626,21 +597,23 @@ function renderPagination() {
 }
 function goPage(p) { currentPage = p; window.scrollTo({ top: 0, behavior: 'smooth' }); loadSection(); }
 
-/* ── BUILD URL ── */
+/* ── BUILD URL — per SPlay API docs ── */
 function buildUrl() {
   const params = new URLSearchParams();
   params.set('page', currentPage);
   params.set('per_page', currentPerPage);
-  if (currentOrigin) params.set('origin', currentOrigin);
+  // SPlay origin filter: JP, CN, KR (uppercase)
+  if (currentOrigin) params.set('origin', currentOrigin.toUpperCase());
 
   if (currentSection === 'search') {
-    params.set('q', currentQuery);
-    return `/api/anime/search?${params}`;
+    // /api/anime/search?q=naruto&per_page=20
+    return `/api/anime/search?q=${encodeURIComponent(currentQuery)}&page=${currentPage}&per_page=${currentPerPage}`;
   }
   if (currentSection === 'popular')  return `/api/anime/popular?${params}`;
   if (currentSection === 'latest')   return `/api/anime/latest-update?${params}`;
-  if (currentSection === 'upcoming') return `/api/anime/upcoming?${params}`;
-  return `/api/anime/season?${params}`; // default: seasonal
+  if (currentSection === 'upcoming') return `/api/anime?status=NOT_YET_RELEASED&${params}`;
+  // Default: /api/anime/season or /api/anime (season tab)
+  return `/api/anime/season?${params}`;
 }
 
 /* ── JIKAN FALLBACK: map SPlay sections to Jikan ── */
@@ -695,18 +668,13 @@ async function loadSection() {
   let list = [], total = 0;
   let source = '';
 
-  // Coba SPlay dulu (3 detik timeout)
+  // SPlay fetch — api.splay.id dengan Bearer token
   let splaySuccess = false;
   try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 4000);
-    const res = await Promise.race([
-      splayFetch(url),
-      new Promise((_, rej) => setTimeout(() => rej(new Error('SPlay timeout')), 4000))
-    ]);
-    clearTimeout(timer);
+    const res = await splayFetch(url);
     if (!res.ok) throw new Error(`SPlay HTTP ${res.status}`);
     const data = await res.json();
+    // SPlay response: { data: [...], meta: { page, per_page, total, total_pages } }
     list = Array.isArray(data) ? data : (data.data || []);
     if (list.length) {
       const meta = data.meta || {};
@@ -755,9 +723,15 @@ function switchSection(section, el) {
 
 /* ── ORIGIN FILTER ── */
 function setOrigin(origin, btn) {
-  currentOrigin = origin; currentPage = 1;
+  currentOrigin = origin; // JP, CN, KR or '' for all
+  currentPage = 1;
   document.querySelectorAll('.origin-btn').forEach(b => b.classList.remove('active'));
   if (btn) btn.classList.add('active');
+  else {
+    // Find button by data-origin attribute
+    const el = document.querySelector(`[data-origin="${origin}"]`);
+    if (el) el.classList.add('active');
+  }
   loadSection();
 }
 
