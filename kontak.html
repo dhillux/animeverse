@@ -22,7 +22,7 @@
       <ul class="navbar-nav mx-auto gap-lg-2">
         <li class="nav-item"><a class="nav-link" href="index.html">Beranda</a></li>
         <li class="nav-item"><a class="nav-link" href="katalog.html">Katalog</a></li>
-        <li class="nav-item"><a class="nav-link" href="anime.html">Anime</a></li>
+        <li class="nav-item"><a class="nav-link" href="anime.html"><i class="bi bi-play-circle me-1"></i>Anime</a></li>
         <li class="nav-item"><a class="nav-link" href="about.html">Tentang</a></li>
         <li class="nav-item"><a class="nav-link active" href="kontak.html">Kontak</a></li>
       </ul>
@@ -36,11 +36,11 @@
 
 <!-- HERO -->
 <div class="page-hero">
-  <span class="hero-glyph" style="font-size:18rem;top:-2rem;left:-4rem"></span>
-  <span class="hero-glyph" style="font-size:11rem;bottom:1rem;right:-2rem"></span>
+  <span class="hero-glyph" style="font-size:18rem;top:-2rem;left:-4rem">連</span>
+  <span class="hero-glyph" style="font-size:11rem;bottom:1rem;right:-2rem">絡</span>
   <div class="container" style="position:relative;z-index:1">
     <div class="label-text mb-2" data-reveal data-delay="0">
-       Hubungi Kami
+      <i class="bi bi-envelope-fill me-1"></i> Hubungi Kami
     </div>
     <h1 class="display-3 mb-3" data-reveal data-delay="1">
       KONTAK<br><span style="color:var(--mv-red)">MANGAVERSE</span>
@@ -60,7 +60,7 @@
       <div class="col-lg-7">
         <div class="contact-form-card" data-reveal data-delay="0">
           <div class="label-text mb-1">
-             Kirim Pesan
+            <i class="bi bi-envelope-paper-fill me-1"></i> Kirim Pesan
           </div>
           <h2 class="display-6 mb-4">FORMULIR KONTAK</h2>
 
@@ -69,22 +69,22 @@
             <label class="form-label">Topik</label>
             <div class="d-flex flex-wrap gap-2" id="topicGroup">
               <button class="btn btn-sm genre-pill active" onclick="selectTopic(this)">
-                 Umum
+                <i class="bi bi-chat-dots me-1"></i> Umum
               </button>
               <button class="btn btn-sm genre-pill" onclick="selectTopic(this)">
-                 Laporan Bug
+                <i class="bi bi-bug me-1"></i> Laporan Bug
               </button>
               <button class="btn btn-sm genre-pill" onclick="selectTopic(this)">
-                 Request Komik
+                <i class="bi bi-collection me-1"></i> Request Komik
               </button>
               <button class="btn btn-sm genre-pill" onclick="selectTopic(this)">
-                 Kerjasama
+                <i class="bi bi-handshake me-1"></i> Kerjasama
               </button>
               <button class="btn btn-sm genre-pill" onclick="selectTopic(this)">
-                 Media / Press
+                <i class="bi bi-newspaper me-1"></i> Media / Press
               </button>
               <button class="btn btn-sm genre-pill" onclick="selectTopic(this)">
-                 Hak Cipta
+                <i class="bi bi-shield-check me-1"></i> Hak Cipta
               </button>
             </div>
           </div>
@@ -123,14 +123,14 @@
           <div class="mb-4">
             <label class="form-label">Lampiran (opsional)</label>
             <div class="upload-zone">
-              
+              <i class="bi bi-paperclip" style="font-size:2rem;opacity:.5"></i>
               <div style="font-family:'Oswald',sans-serif;font-size:.8rem;letter-spacing:1px;text-transform:uppercase;color:var(--mv-muted)">Klik atau drag file ke sini</div>
               <div style="font-size:.75rem;color:var(--mv-muted);margin-top:.25rem">PNG, JPG, PDF — Maks. 5MB</div>
             </div>
           </div>
 
           <button class="btn-submit" onclick="sendContact(event)">
-            Kirim Pesan
+            <i class="bi bi-send-fill me-2"></i>Kirim Pesan
           </button>
         </div>
       </div>
@@ -138,21 +138,21 @@
       <!-- INFO SIDEBAR -->
       <div class="col-lg-5">
         <div class="label-text mb-3" data-reveal data-delay="0">
-           Informasi Kontak
+          <i class="bi bi-geo-alt-fill me-1"></i> Informasi Kontak
         </div>
 
         <!-- INFO CARDS -->
         <div class="d-flex flex-column gap-3 mb-4">
           <div class="info-card" data-reveal data-delay="1">
-            <div class="info-icon red"></div>
+            <div class="info-icon red"><i class="bi bi-envelope-fill"></i></div>
             <div>
               <div class="info-title">Email</div>
-              <div class="info-val"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0b636a67644b666a656c6a7d6e79786e25626f">[email&#160;protected]</a></div>
+              <div class="info-val">halo@mangaverse.id</div>
               <div class="info-sub">Balasan dalam 24 jam</div>
             </div>
           </div>
           <div class="info-card" data-reveal data-delay="2">
-            <div class="info-icon gold"></div>
+            <div class="info-icon gold"><i class="bi bi-whatsapp"></i></div>
             <div>
               <div class="info-title">WhatsApp</div>
               <div class="info-val">+62 812-3456-7890</div>
@@ -160,15 +160,15 @@
             </div>
           </div>
           <div class="info-card" data-reveal data-delay="3">
-            <div class="info-icon blue"></div>
+            <div class="info-icon blue"><i class="bi bi-geo-alt-fill"></i></div>
             <div>
               <div class="info-title">Kantor</div>
-              <div class="info-val">Jl. Letjen Pol Soemarto</div>
-              <div class="info-sub">Purwokerto, Banyumas 53127</div>
+              <div class="info-val">Jl. Seturan Raya No.88</div>
+              <div class="info-sub">Sleman, Yogyakarta 55281</div>
             </div>
           </div>
           <div class="info-card" data-reveal data-delay="4">
-            <div class="info-icon green"></div>
+            <div class="info-icon green"><i class="bi bi-clock-fill"></i></div>
             <div>
               <div class="info-title">Jam Operasional</div>
               <div class="info-val">Senin – Sabtu</div>
@@ -180,23 +180,23 @@
         <!-- RESPONSE TIME -->
         <div class="response-time-card mb-4" data-reveal data-delay="2">
           <div class="label-text mb-3">
-             Waktu Respons
+            <i class="bi bi-lightning-fill me-1"></i> Waktu Respons
           </div>
           <div class="d-flex flex-column gap-2">
             <div class="d-flex justify-content-between align-items-center">
-              <span style="font-size:.88rem"> Chat Umum</span>
+              <span style="font-size:.88rem"><i class="bi bi-chat-dots me-1 text-secondary"></i> Chat Umum</span>
               <span style="font-family:'Oswald',sans-serif;font-size:.82rem;color:var(--mv-gold)">≤ 2 jam</span>
             </div>
             <div class="d-flex justify-content-between align-items-center">
-              <span style="font-size:.88rem"> Laporan Bug</span>
+              <span style="font-size:.88rem"><i class="bi bi-bug me-1 text-secondary"></i> Laporan Bug</span>
               <span style="font-family:'Oswald',sans-serif;font-size:.82rem;color:var(--mv-gold)">≤ 6 jam</span>
             </div>
             <div class="d-flex justify-content-between align-items-center">
-              <span style="font-size:.88rem"> Kerjasama</span>
+              <span style="font-size:.88rem"><i class="bi bi-handshake me-1 text-secondary"></i> Kerjasama</span>
               <span style="font-family:'Oswald',sans-serif;font-size:.82rem;color:var(--mv-gold)">≤ 3 hari</span>
             </div>
             <div class="d-flex justify-content-between align-items-center">
-              <span style="font-size:.88rem"> Hak Cipta</span>
+              <span style="font-size:.88rem"><i class="bi bi-shield-check me-1 text-secondary"></i> Hak Cipta</span>
               <span style="font-family:'Oswald',sans-serif;font-size:.82rem;color:var(--mv-red)">≤ 24 jam</span>
             </div>
           </div>
@@ -205,11 +205,11 @@
         <!-- MAP -->
         <div class="map-placeholder mb-1" data-reveal data-delay="3">
           <div class="map-grid"></div>
-          
-          <div class="map-address">Jl. Letjen Pol Soemarto<br>Purwokerto, Banyumas</div>
+          <i class="bi bi-geo-alt-fill map-pin"></i>
+          <div class="map-address">Jl. Seturan Raya No.88<br>Sleman, Yogyakarta</div>
         </div>
         <small class="text-secondary" style="font-size:.75rem">
-           Kunjungan kantor harap buat janji terlebih dahulu
+          <i class="bi bi-info-circle me-1"></i> Kunjungan kantor harap buat janji terlebih dahulu
         </small>
       </div>
 
@@ -222,7 +222,7 @@
   <div class="container">
     <div class="row align-items-center g-4">
       <div class="col-lg-4" data-reveal data-delay="0">
-        <div class="label-text mb-1"> Temukan Kami</div>
+        <div class="label-text mb-1"><i class="bi bi-globe2 me-1"></i> Temukan Kami</div>
         <h2 class="display-6 mb-2">SOSIAL MEDIA</h2>
         <p class="text-secondary" style="font-size:.9rem;line-height:1.8">Ikuti kami untuk update terbaru, giveaway, dan diskusi seru seputar manga & manhwa!</p>
       </div>
@@ -231,73 +231,73 @@
           <div class="col-sm-6" data-reveal data-delay="1">
             <a href="#" class="social-link-card">
               <div class="social-link-icon" style="background:rgba(29,161,242,.15)">
-                
+                <i class="bi bi-twitter-x"></i>
               </div>
               <div>
                 <div class="social-link-name">Twitter / X</div>
                 <div class="social-link-handle">@AnimeVerseID</div>
               </div>
-              
+              <i class="bi bi-arrow-right ms-auto text-secondary"></i>
             </a>
           </div>
           <div class="col-sm-6" data-reveal data-delay="2">
             <a href="#" class="social-link-card">
               <div class="social-link-icon" style="background:rgba(24,119,242,.15)">
-                
+                <i class="bi bi-facebook"></i>
               </div>
               <div>
                 <div class="social-link-name">Facebook</div>
                 <div class="social-link-handle">AnimeVerse Indonesia</div>
               </div>
-              
+              <i class="bi bi-arrow-right ms-auto text-secondary"></i>
             </a>
           </div>
           <div class="col-sm-6" data-reveal data-delay="1">
             <a href="#" class="social-link-card">
               <div class="social-link-icon" style="background:rgba(225,48,108,.15)">
-                
+                <i class="bi bi-instagram"></i>
               </div>
               <div>
                 <div class="social-link-name">Instagram</div>
                 <div class="social-link-handle">@mangaverse.id</div>
               </div>
-              
+              <i class="bi bi-arrow-right ms-auto text-secondary"></i>
             </a>
           </div>
           <div class="col-sm-6" data-reveal data-delay="2">
             <a href="#" class="social-link-card">
               <div class="social-link-icon" style="background:rgba(114,137,218,.15)">
-                
+                <i class="bi bi-discord"></i>
               </div>
               <div>
                 <div class="social-link-name">Discord</div>
                 <div class="social-link-handle">discord.gg/mangaverse</div>
               </div>
-              
+              <i class="bi bi-arrow-right ms-auto text-secondary"></i>
             </a>
           </div>
           <div class="col-sm-6" data-reveal data-delay="1">
             <a href="#" class="social-link-card">
               <div class="social-link-icon" style="background:rgba(255,0,0,.1)">
-                
+                <i class="bi bi-youtube"></i>
               </div>
               <div>
                 <div class="social-link-name">YouTube</div>
                 <div class="social-link-handle">AnimeVerse Official</div>
               </div>
-              
+              <i class="bi bi-arrow-right ms-auto text-secondary"></i>
             </a>
           </div>
           <div class="col-sm-6" data-reveal data-delay="2">
             <a href="#" class="social-link-card">
               <div class="social-link-icon" style="background:rgba(0,200,83,.08)">
-                
+                <i class="bi bi-whatsapp"></i>
               </div>
               <div>
                 <div class="social-link-name">WhatsApp Group</div>
                 <div class="social-link-handle">Komunitas Pembaca MV</div>
               </div>
-              
+              <i class="bi bi-arrow-right ms-auto text-secondary"></i>
             </a>
           </div>
         </div>
@@ -311,53 +311,53 @@
   <div class="container">
     <div class="row g-5 align-items-start">
       <div class="col-lg-4" data-reveal data-delay="0">
-        <div class="label-text mb-1"> FAQ</div>
+        <div class="label-text mb-1"><i class="bi bi-question-circle me-1"></i> FAQ</div>
         <h2 class="display-6 mb-3">PERTANYAAN<br>UMUM</h2>
         <p class="text-secondary" style="font-size:.9rem;line-height:1.8">Tidak menemukan jawaban yang kamu cari? Kirim pesan langsung ke tim kami.</p>
         <a href="#" class="btn btn-mv-outline mt-2" style="width:auto;padding:.6rem 1.5rem">
-          Hubungi Tim
+          <i class="bi bi-envelope me-2"></i>Hubungi Tim
         </a>
       </div>
       <div class="col-lg-8" data-reveal data-delay="1">
         <div class="faq-item">
           <div class="faq-q" onclick="toggleFaq(this)">
             Apakah AnimeVerse benar-benar gratis?
-            
+            <i class="bi bi-plus-circle"></i>
           </div>
           <div class="faq-a">Ya, 100% gratis! Kamu bisa membaca semua komik di AnimeVerse tanpa perlu membayar, tanpa iklan yang mengganggu. Kami berkomitmen untuk menjaga platform ini tetap gratis untuk semua pembaca.</div>
         </div>
         <div class="faq-item">
           <div class="faq-q" onclick="toggleFaq(this)">
             Bagaimana cara request komik yang belum ada?
-            
+            <i class="bi bi-plus-circle"></i>
           </div>
           <div class="faq-a">Kamu bisa request komik melalui formulir kontak di atas dengan memilih topik "Request Komik", atau langsung di kolom komentar komik manapun. Tim kurator kami akan mempertimbangkan setiap request berdasarkan popularitas dan ketersediaan.</div>
         </div>
         <div class="faq-item">
           <div class="faq-q" onclick="toggleFaq(this)">
             Komik tidak mau loading / gambar tidak tampil, apa yang harus dilakukan?
-            
+            <i class="bi bi-plus-circle"></i>
           </div>
           <div class="faq-a">Pertama, coba refresh halaman dan pastikan koneksi internetmu stabil. Jika masalah berlanjut, coba bersihkan cache browser. Jika tetap bermasalah, laporkan ke kami melalui form kontak dengan menyertakan nama komik, chapter, dan screenshot error.</div>
         </div>
         <div class="faq-item">
           <div class="faq-q" onclick="toggleFaq(this)">
             Apakah progres baca saya tersimpan otomatis?
-            
+            <i class="bi bi-plus-circle"></i>
           </div>
           <div class="faq-a">Progres baca tersimpan otomatis jika kamu sudah login. Tanpa login, progres hanya tersimpan di browser lokal dan bisa hilang jika cache dibersihkan. Kami sangat menyarankan untuk daftar akun gratis agar progres aman di semua perangkat.</div>
         </div>
         <div class="faq-item">
           <div class="faq-q" onclick="toggleFaq(this)">
             Saya ingin menjadi translator / editor, bagaimana caranya?
-            
+            <i class="bi bi-plus-circle"></i>
           </div>
-          <div class="faq-a">Wah, kami senang ada yang berminat! Kirim email ke <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6f070e03002f020e01080e190a1d1c0a41060b">[email&#160;protected]</a> dengan subjek "Lamaran Translator/Editor" dan sertakan portofolio atau contoh terjemahanmu. Tim HR kami akan menghubungimu dalam 3-5 hari kerja.</div>
+          <div class="faq-a">Wah, kami senang ada yang berminat! Kirim email ke halo@mangaverse.id dengan subjek "Lamaran Translator/Editor" dan sertakan portofolio atau contoh terjemahanmu. Tim HR kami akan menghubungimu dalam 3-5 hari kerja.</div>
         </div>
         <div class="faq-item">
           <div class="faq-q" onclick="toggleFaq(this)">
             Bagaimana cara melaporkan konten yang melanggar hak cipta?
-            
+            <i class="bi bi-plus-circle"></i>
           </div>
           <div class="faq-a">AnimeVerse sangat serius menanggapi masalah hak cipta. Gunakan formulir kontak dengan topik "Hak Cipta" dan sertakan detail konten yang dilaporkan (judul, chapter, URL). Tim legal kami akan menindaklanjuti dalam 24 jam.</div>
         </div>
@@ -369,7 +369,7 @@
 <!-- NEWSLETTER CTA -->
 <section class="py-5 bg-mv-dark2">
   <div class="container text-center" data-reveal data-delay="0">
-    <div class="label-text mb-2"> Newsletter</div>
+    <div class="label-text mb-2"><i class="bi bi-mailbox2 me-1"></i> Newsletter</div>
     <h2 class="display-6 mb-3">JANGAN KETINGGALAN UPDATE</h2>
     <p class="text-secondary mb-4" style="max-width:440px;margin:0 auto">
       Daftar newsletter kami dan dapatkan notifikasi chapter baru, berita eksklusif, dan promo langsung di inbox-mu.
@@ -377,11 +377,11 @@
     <div class="d-flex gap-2 justify-content-center flex-wrap" style="max-width:480px;margin:0 auto">
       <input type="email" class="form-control" placeholder="email@kamu.com" style="flex:1;min-width:200px">
       <button class="btn btn-mv-primary px-4" style="white-space:nowrap">
-         Subscribe
+        <i class="bi bi-send me-1"></i> Subscribe
       </button>
     </div>
     <small class="text-secondary d-block mt-2" style="font-size:.78rem">
-       Tidak ada spam. Berhenti berlangganan kapan saja.
+      <i class="bi bi-shield-check me-1"></i> Tidak ada spam. Berhenti berlangganan kapan saja.
     </small>
   </div>
 </section>
@@ -394,10 +394,10 @@
         <a href="index.html" class="navbar-brand d-block mb-3">Anime<span>Verse</span></a>
         <p class="text-secondary" style="font-size:.88rem;line-height:1.7">Platform streaming anime online terbesar di Indonesia. Gratis, lengkap, update setiap hari.</p>
         <div class="d-flex gap-2 mt-3">
-          <a href="#" class="social-btn-mv"></a>
-          <a href="#" class="social-btn-mv"></a>
-          <a href="#" class="social-btn-mv"></a>
-          <a href="#" class="social-btn-mv"></a>
+          <a href="#" class="social-btn-mv"><i class="bi bi-discord"></i></a>
+          <a href="#" class="social-btn-mv"><i class="bi bi-facebook"></i></a>
+          <a href="#" class="social-btn-mv"><i class="bi bi-twitter-x"></i></a>
+          <a href="#" class="social-btn-mv"><i class="bi bi-instagram"></i></a>
         </div>
       </div>
       <div class="col-6 col-lg-2">
@@ -424,15 +424,22 @@
     </div>
     <hr style="border-color:rgba(255,255,255,.08)"/>
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-      <span class="text-secondary" style="font-size:.8rem">© 2026 AnimeVerse. All rights reserved.</span>
-      <span style="color:var(--mv-red);font-size:.8rem">Made in Purwokerto</span>
+      <span class="text-secondary" style="font-size:.8rem">© 2025 AnimeVerse. All rights reserved.</span>
+      <span style="color:var(--mv-red);font-size:.8rem">Made with <i class="bi bi-heart-fill"></i> in Yogyakarta</span>
     </div>
   </div>
 </footer>
 
 <!-- TOAST SUCCESS -->
 <div class="toast-mv" id="toastMv">
-  
+  <i class="bi bi-check-circle-fill" style="font-size:1.4rem;color:#3fb950"></i>
   <div>
     <div class="toast-mv-text" style="color:#3fb950">Pesan Terkirim!</div>
-    <div style="fon
+    <div style="font-size:.8rem;color:var(--mv-muted)">Tim kami akan membalas segera.</div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
