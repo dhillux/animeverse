@@ -176,8 +176,9 @@
         <iframe id="embedPlayer"
           style="display:none;width:100%;height:100%;border:none;background:#000"
           allowfullscreen
-          allow="autoplay; fullscreen; picture-in-picture"
-          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-presentation">
+          allowfullscreen
+        allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+          sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation">
         </iframe>
         <!-- HTML5 VIDEO (fallback / SPlay HLS) -->
         <video id="mainPlayer" controls crossorigin="anonymous" style="display:none;width:100%;height:100%">
@@ -269,7 +270,7 @@ async function getSplaySlug(title, malId) {
     console.log(`✅ SPlay slug: "${slug}" (search: "${cleanTitle}")`);
     return slug;
   } catch(e) {
-    console.warn('Gagal dapat SPlay slug:', e.message);
+    // 403 = domain belum di-whitelist di hub.splay.id/dashboard
     return null;
   }
 }
@@ -464,10 +465,12 @@ async function loadEpisodes() {
             allEps = list;
             console.log(`✅ Episode dari SPlay: ${allEps.length} ep`);
           }
+        } else if (res.status === 403) {
+          console.info('ℹ️ SPlay: domain belum di-whitelist. Whitelist di hub.splay.id/dashboard');
         }
       }
     } catch(eSplay) {
-      console.warn('SPlay episode list gagal:', eSplay.message);
+      // Silent fail — embed player tetap aktif
     }
 
     // 2. Jika SPlay kosong → Jikan fallback
@@ -553,32 +556,40 @@ function filterEpisodes() {
    EMBED SERVERS — pakai MAL ID + episode num
    Tidak butuh API key, langsung jalan.
 ════════════════════════════════════════════ */
+// ═══════════════════════════════════════════════
 // Server embed — pakai MAL ID, tidak butuh API key
+// URL format diverifikasi dari docs resmi masing-masing
+// ═══════════════════════════════════════════════
 const EMBED_SERVERS = [
   {
-    label: '🟣 VidSrc',
-    getUrl: (malId, ep) => `https://vidsrc.xyz/embed/anime?malId=${malId}&episode=${ep}`,
-    hasSub: true
-  },
-  {
-    label: '🔵 VidSrc 2',
-    getUrl: (malId, ep) => `https://vidsrc.me/embed/anime?malId=${malId}&ep=${ep}`,
-    hasSub: true
-  },
-  {
-    label: '🟢 VidSrc 3',
+    label: '🟣 Server 1',
+    // vidsrc.to — format: /embed/anime/{mal_id}/{ep_num}
     getUrl: (malId, ep) => `https://vidsrc.to/embed/anime/${malId}/${ep}`,
     hasSub: true
   },
   {
-    label: '🟡 AnimeZ',
-    getUrl: (malId, ep) => `https://www.animez.xyz/embed/${malId}/${ep}`,
-    hasSub: false
+    label: '🔵 Server 2',
+    // vidsrc.me — format: /embed/anime/{mal_id}/{ep_num}
+    getUrl: (malId, ep) => `https://vidsrc.me/embed/anime/${malId}/${ep}`,
+    hasSub: true
   },
   {
-    label: '⚪ Aniwave',
-    getUrl: (malId, ep) => `https://aniwatchtv.to/embed/anime?id=${malId}&ep=${ep}`,
+    label: '🟢 Server 3',
+    // vidsrc.in — format: /embed/anime?malId={id}&ep={ep}
+    getUrl: (malId, ep) => `https://vidsrc.in/embed/anime?malId=${malId}&ep=${ep}`,
     hasSub: true
+  },
+  {
+    label: '🟡 Server 4',
+    // anime.nexplay.it — format: /?malid={id}&ep={ep}
+    getUrl: (malId, ep) => `https://anime.nexplay.it/?malid=${malId}&ep=${ep}`,
+    hasSub: true
+  },
+  {
+    label: '🟠 Server 5',
+    // player.smashy.stream — format: /anime/{mal_id}?ep={ep}
+    getUrl: (malId, ep) => `https://player.smashy.stream/anime/${malId}?ep=${ep}`,
+    hasSub: false
   }
 ];
 
