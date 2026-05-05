@@ -73,6 +73,14 @@
     .page-link:hover { background:#7250dc!important; border-color:#7250dc!important; color:#fff!important; }
     .page-item.active .page-link { background:#7250dc!important; border-color:#7250dc!important; color:#fff!important; }
     .src-badge { font-family:'Oswald',sans-serif; font-size:.65rem; letter-spacing:1px; padding:.1rem .5rem; border-radius:4px; }
+    .adv-radio { display:flex; align-items:center; gap:.4rem; cursor:pointer; }
+    .adv-radio input { accent-color:#7250dc; cursor:pointer; }
+    .adv-radio span { font-family:'Oswald',sans-serif; font-size:.78rem; letter-spacing:.5px; color:rgba(255,255,255,.7); transition:color .15s; }
+    .adv-radio:hover span { color:#fff; }
+    .adv-genre-btn { font-family:'Oswald',sans-serif; font-size:.72rem; letter-spacing:1px; text-transform:uppercase; padding:.25rem .75rem; border-radius:20px; border:1px solid rgba(255,255,255,.1); color:rgba(255,255,255,.5); background:transparent; cursor:pointer; transition:all .2s; display:flex; align-items:center; gap:.35rem; }
+    .adv-genre-btn input { display:none; }
+    .adv-genre-btn:hover { border-color:rgba(114,80,220,.4); color:#b09ef5; }
+    .adv-genre-btn.checked { background:rgba(114,80,220,.2); border-color:#7250dc; color:#b09ef5; }
   </style>
 </head>
 <body>
@@ -97,7 +105,7 @@
   </div>
 </nav>
 
-<div style="margin-top:56px">
+<div style="margin-top:72px">
   <div class="ticker-wrap"><div class="ticker" id="tickerContent"><span class="ticker-item">Memuat data...</span></div></div>
 </div>
 
@@ -113,6 +121,61 @@
       <input type="text" id="animeSearchInput" class="anime-search-input" placeholder="Cari judul anime...">
       <button class="search-clear-btn" id="searchClearBtn" onclick="clearSearch()"><i class="bi bi-x-circle-fill"></i></button>
     </div>
+
+    <!-- ADVANCED SEARCH PANEL -->
+    <div id="advSearchPanel" style="display:none;background:rgba(10,5,24,.85);border:1px solid rgba(114,80,220,.25);border-radius:14px;padding:1.4rem 1.6rem;margin-bottom:1.5rem;backdrop-filter:blur(8px);max-width:680px;margin-left:auto;margin-right:auto;">
+      <div class="mb-3">
+        <div style="font-family:'Oswald',sans-serif;font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:.5rem">Status</div>
+        <div class="d-flex gap-2 flex-wrap">
+          <label class="adv-radio"><input type="radio" name="advStatus" value="" checked onchange="applyAdvSearch()"> <span>Semua</span></label>
+          <label class="adv-radio"><input type="radio" name="advStatus" value="airing" onchange="applyAdvSearch()"> <span>On Air</span></label>
+          <label class="adv-radio"><input type="radio" name="advStatus" value="finished" onchange="applyAdvSearch()"> <span>Tamat</span></label>
+        </div>
+      </div>
+      <div class="mb-3">
+        <div style="font-family:'Oswald',sans-serif;font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:.5rem">Tipe</div>
+        <div class="d-flex gap-2 flex-wrap">
+          <label class="adv-radio"><input type="radio" name="advType" value="" checked onchange="applyAdvSearch()"> <span>Semua</span></label>
+          <label class="adv-radio"><input type="radio" name="advType" value="tv" onchange="applyAdvSearch()"> <span>TV</span></label>
+          <label class="adv-radio"><input type="radio" name="advType" value="ova" onchange="applyAdvSearch()"> <span>OVA</span></label>
+          <label class="adv-radio"><input type="radio" name="advType" value="ona" onchange="applyAdvSearch()"> <span>ONA</span></label>
+          <label class="adv-radio"><input type="radio" name="advType" value="special" onchange="applyAdvSearch()"> <span>Special</span></label>
+          <label class="adv-radio"><input type="radio" name="advType" value="movie" onchange="applyAdvSearch()"> <span>Movie</span></label>
+        </div>
+      </div>
+      <div class="mb-3">
+        <div style="font-family:'Oswald',sans-serif;font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:.5rem">Urutkan</div>
+        <div class="d-flex gap-2 flex-wrap">
+          <label class="adv-radio"><input type="radio" name="advSort" value="" checked onchange="applyAdvSearch()"> <span>Default</span></label>
+          <label class="adv-radio"><input type="radio" name="advSort" value="score" onchange="applyAdvSearch()"> <span>Skor</span></label>
+          <label class="adv-radio"><input type="radio" name="advSort" value="title" onchange="applyAdvSearch()"> <span>A–Z</span></label>
+          <label class="adv-radio"><input type="radio" name="advSort" value="popularity" onchange="applyAdvSearch()"> <span>Populer</span></label>
+        </div>
+      </div>
+      <div>
+        <div style="font-family:'Oswald',sans-serif;font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:.5rem">Genre</div>
+        <div class="d-flex gap-2 flex-wrap" id="advGenreWrap">
+          <label class="adv-genre-btn active-genre"><input type="checkbox" value=""> Semua</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Action" onchange="applyAdvSearch()"> Action</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Adventure" onchange="applyAdvSearch()"> Adventure</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Comedy" onchange="applyAdvSearch()"> Comedy</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Drama" onchange="applyAdvSearch()"> Drama</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Fantasy" onchange="applyAdvSearch()"> Fantasy</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Horror" onchange="applyAdvSearch()"> Horror</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Romance" onchange="applyAdvSearch()"> Romance</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Sci-Fi" onchange="applyAdvSearch()"> Sci-Fi</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Sports" onchange="applyAdvSearch()"> Sports</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Supernatural" onchange="applyAdvSearch()"> Supernatural</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Slice of Life" onchange="applyAdvSearch()"> Slice of Life</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Shounen" onchange="applyAdvSearch()"> Shounen</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Seinen" onchange="applyAdvSearch()"> Seinen</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Mystery" onchange="applyAdvSearch()"> Mystery</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Isekai" onchange="applyAdvSearch()"> Isekai</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Harem" onchange="applyAdvSearch()"> Harem</label>
+          <label class="adv-genre-btn"><input type="checkbox" value="Ecchi" onchange="applyAdvSearch()"> Ecchi</label>
+        </div>
+      </div>
+    </div>
     <div class="d-flex align-items-center gap-2 flex-wrap">
       <span style="font-family:'Oswald',sans-serif;font-size:.72rem;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,.4)">Origin:</span>
       <button class="origin-btn active" data-origin="" onclick="setOrigin('',this)">🌐 Semua</button>
@@ -120,6 +183,7 @@
       <button class="origin-btn" data-origin="CN" onclick="setOrigin('CN',this)">🇨🇳 China</button>
       <button class="origin-btn" data-origin="KR" onclick="setOrigin('KR',this)">🇰🇷 Korea</button>
     </div>
+
   </div>
 </div>
 
@@ -218,7 +282,8 @@ const splayFetch = (path) => fetch(
 );
 
 /* ── STATE ── */
-let currentSection = 'season', currentPage = 1, currentOrigin = '';
+let currentSection = 'season', currentPage = 1, currentOrigin = '', currentGenre = '';
+let advSearch = { status:'', type:'', sort:'', genres:[] };
 let currentPerPage = 30, currentQuery = '', totalPages = 1, searchDebounce = null;
 
 /* ── WATCHLIST / HISTORY ── */
@@ -396,6 +461,7 @@ async function loadSection() {
   // Build SPlay path
   const params = new URLSearchParams({page:currentPage, per_page:currentPerPage});
   if (currentOrigin) params.set('origin', currentOrigin);
+  if (currentGenre) params.set('genre', currentGenre);
   let splayPath;
   if (currentSection==='search')   splayPath=`/api/anime/search?q=${encodeURIComponent(currentQuery)}&${params}`;
   else if (currentSection==='popular')  splayPath=`/api/anime/popular?${params}`;
@@ -413,6 +479,8 @@ async function loadSection() {
     const raw = Array.isArray(data) ? data : (data.data||[]);
     if (raw.length) {
       list = raw.map(normalizeSPlay);
+      // Client-side genre filter for SPlay (API may not support genre param)
+      if (currentGenre) list = list.filter(a => (a.genres||[]).some(g => g.toLowerCase() === currentGenre.toLowerCase()));
       const meta = data.meta||{};
       totalPages = meta.total_pages||1;
       total = meta.total||raw.length;
@@ -424,12 +492,18 @@ async function loadSection() {
   if (!list.length) {
     try {
       const lim = Math.min(currentPerPage,25);
+      // Jikan genre mapping
+      const jikanGenreMap = {'Action':'1','Adventure':'2','Comedy':'4','Drama':'8','Fantasy':'10','Horror':'14','Romance':'22','Sci-Fi':'24','Sports':'30','Supernatural':'37','Slice of Life':'36','Shounen':'27','Seinen':'42','Mystery':'7','Isekai':'62','Harem':'35','Ecchi':'9'};
+      const genreParam = currentGenre && jikanGenreMap[currentGenre] ? `&genres=${jikanGenreMap[currentGenre]}` : '';
+      const statusParam = advSearch.status === 'airing' ? '&status=airing' : advSearch.status === 'finished' ? '&status=complete' : '';
+      const typeParam = advSearch.type ? `&type=${advSearch.type}` : '';
+      const sortParam = advSearch.sort === 'score' ? '&order_by=score&sort=desc' : advSearch.sort === 'title' ? '&order_by=title&sort=asc' : advSearch.sort === 'popularity' ? '&order_by=popularity&sort=asc' : '';
       let jUrl;
-      if (currentSection==='search')   jUrl=`${JIKAN_BASE}/anime?q=${encodeURIComponent(currentQuery)}&page=${currentPage}&limit=${lim}&sfw=true`;
-      else if (currentSection==='popular')  jUrl=`${JIKAN_BASE}/top/anime?page=${currentPage}&limit=${lim}&type=tv`;
-      else if (currentSection==='latest')   jUrl=`${JIKAN_BASE}/anime?status=airing&page=${currentPage}&limit=${lim}&order_by=start_date&sort=desc`;
-      else if (currentSection==='upcoming') jUrl=`${JIKAN_BASE}/anime?status=upcoming&page=${currentPage}&limit=${lim}`;
-      else jUrl=`${JIKAN_BASE}/seasons/now?page=${currentPage}&limit=${lim}`;
+      if (currentSection==='search')   jUrl=`${JIKAN_BASE}/anime?q=${encodeURIComponent(currentQuery)}&page=${currentPage}&limit=${lim}&sfw=true${genreParam}${statusParam}${typeParam}${sortParam}`;
+      else if (currentSection==='popular')  jUrl=`${JIKAN_BASE}/top/anime?page=${currentPage}&limit=${lim}&type=tv${genreParam}`;
+      else if (currentSection==='latest')   jUrl=`${JIKAN_BASE}/anime?status=airing&page=${currentPage}&limit=${lim}&order_by=start_date&sort=desc${genreParam}`;
+      else if (currentSection==='upcoming') jUrl=`${JIKAN_BASE}/anime?status=upcoming&page=${currentPage}&limit=${lim}${genreParam}`;
+      else jUrl=`${JIKAN_BASE}/seasons/now?page=${currentPage}&limit=${lim}${genreParam}`;
 
       const res = await fetch(jUrl);
       if (!res.ok) throw new Error(`Jikan ${res.status}`);
@@ -469,7 +543,15 @@ function switchSection(section, el) {
 /* ── ORIGIN FILTER ── */
 function setOrigin(origin, btn) {
   currentOrigin=origin; currentPage=1;
-  document.querySelectorAll('.origin-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.origin-btn[data-origin]').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  loadSection();
+}
+
+/* ── GENRE FILTER ── */
+function setGenre(genre, btn) {
+  currentGenre=genre; currentPage=1;
+  document.querySelectorAll('.origin-btn[data-genre]').forEach(b=>b.classList.remove('active'));
   if(btn)btn.classList.add('active');
   loadSection();
 }
@@ -480,8 +562,14 @@ function onPerPageChange(){currentPerPage=parseInt(document.getElementById('perP
 /* ── SEARCH ── */
 const searchInput=document.getElementById('animeSearchInput');
 const clearBtn=document.getElementById('searchClearBtn');
+const advPanel=document.getElementById('advSearchPanel');
+
+searchInput.addEventListener('focus', function() {
+  if (this.value.trim()) advPanel.style.display = 'block';
+});
 searchInput.addEventListener('input',function(){
   clearBtn.style.display=this.value?'block':'none';
+  advPanel.style.display = this.value.trim() ? 'block' : 'none';
   clearTimeout(searchDebounce);
   if(!this.value.trim()){exitSearch();return;}
   searchDebounce=setTimeout(()=>{
@@ -491,7 +579,48 @@ searchInput.addEventListener('input',function(){
     loadSection();
   },500);
 });
-function clearSearch(){searchInput.value='';clearBtn.style.display='none';exitSearch();}
+
+document.addEventListener('click', function(e) {
+  if (!searchInput.contains(e.target) && !advPanel.contains(e.target)) {
+    advPanel.style.display = 'none';
+  }
+});
+
+/* ── GENRE CHECKBOX TOGGLE ── */
+document.querySelectorAll('.adv-genre-btn').forEach(function(lbl) {
+  lbl.addEventListener('click', function() {
+    const cb = this.querySelector('input');
+    if (!cb.value) {
+      // "Semua" clicked — uncheck all others
+      document.querySelectorAll('.adv-genre-btn').forEach(l => { l.querySelector('input').checked = false; l.classList.remove('checked'); });
+      this.classList.add('checked');
+    } else {
+      // uncheck "Semua"
+      const allLbl = document.querySelector('.adv-genre-btn input[value=""]').closest('.adv-genre-btn');
+      allLbl.classList.remove('checked');
+      allLbl.querySelector('input').checked = false;
+      cb.checked = !cb.checked;
+      this.classList.toggle('checked', cb.checked);
+    }
+    applyAdvSearch();
+  });
+});
+
+function applyAdvSearch() {
+  advSearch.status = document.querySelector('input[name="advStatus"]:checked')?.value || '';
+  advSearch.type   = document.querySelector('input[name="advType"]:checked')?.value || '';
+  advSearch.sort   = document.querySelector('input[name="advSort"]:checked')?.value || '';
+  advSearch.genres = Array.from(document.querySelectorAll('.adv-genre-btn input:checked')).map(cb => cb.value).filter(Boolean);
+  currentGenre = advSearch.genres.length === 1 ? advSearch.genres[0] : '';
+  currentPage = 1;
+  if (currentQuery) loadSection();
+}
+function clearSearch(){
+  searchInput.value='';
+  clearBtn.style.display='none';
+  advPanel.style.display='none';
+  exitSearch();
+}
 function exitSearch(){
   currentQuery='';currentSection='season';currentPage=1;
   document.getElementById('searchTab').style.display='none';
